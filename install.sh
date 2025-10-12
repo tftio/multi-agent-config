@@ -1,298 +1,290 @@
 #!/bin/bash
-
-# install.sh - Install Multi Agent Config from GitHub releases
-# Usage: curl -sSL https://raw.githubusercontent.com/jfb/multi-agent-config/main/install.sh | sh
-# Or: INSTALL_DIR=/usr/local/bin curl -sSL ... | sh
-
 set -euo pipefail
 
-# Configuration
-GITHUB_REPO="jfb/multi-agent-config"
-BINARY_NAME="multi-agent-config"
+# multi-agent-config installation script
+# Usage: curl -fsSL https://raw.githubusercontent.com/tftio/multi-agent-config/main/install.sh | sh
+# Or with custom install directory: INSTALL_DIR=/usr/local/bin curl ... | sh
+
+TOOL_NAME="multi-agent-config"
+REPO_OWNER="${REPO_OWNER:-tftio}"
+REPO_NAME="${REPO_NAME:-multi-agent-config}"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/bin}"
+GITHUB_API_URL="https://api.github.com"
+GITHUB_DOWNLOAD_URL="https://github.com"
 
-# Colors for output (only if terminal supports it)
-if [ -t 1 ]; then
-    RED='\033[0;31m'
-    GREEN='\033[0;32m'
-    YELLOW='\033[1;33m'
-    BLUE='\033[0;34m'
-    NC='\033[0m' # No Color
-else
-    RED=''
-    GREEN=''
-    YELLOW=''
-    BLUE=''
-    NC=''
-fi
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Logging functions
-log_info() { echo -e "${BLUE}[INFO]${NC} $1" >&2; }
-log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1" >&2; }
-log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1" >&2; }
-log_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; }
+log_info() {
+    echo -e "${BLUE}[INFO]${NC} $1" >&2
+}
 
-# Detect platform and architecture
+log_success() {
+    echo -e "${GREEN}[SUCCESS]${NC} $1" >&2
+}
+
+log_warn() {
+    echo -e "${YELLOW}[WARN]${NC} $1" >&2
+}
+
+log_error() {
+    echo -e "${RED}[ERROR]${NC} $1" >&2
+}
+
+# Detect OS and architecture
 detect_platform() {
-    local os arch
+    local os arch target
 
+    # Detect OS
     case "$(uname -s)" in
-        Linux*)     os="unknown-linux-gnu" ;;
-        Darwin*)    os="apple-darwin" ;;
-        CYGWIN*|MINGW*|MSYS*) os="pc-windows-msvc" ;;
-        *)          log_error "Unsupported operating system: $(uname -s)"; exit 1 ;;
+        Linux*) os="unknown-linux-gnu" ;;
+        Darwin*) os="apple-darwin" ;;
+        MINGW*|MSYS*|CYGWIN*) os="pc-windows-msvc" ;;
+        *)
+            log_error "Unsupported operating system: $(uname -s)"
+            exit 1
+            ;;
     esac
 
+    # Detect architecture
     case "$(uname -m)" in
-        x86_64|amd64)   arch="x86_64" ;;
-        aarch64|arm64)  arch="aarch64" ;;
-        armv7l)         arch="armv7" ;;
-        *)              log_error "Unsupported architecture: $(uname -m)"; exit 1 ;;
+        x86_64|amd64) arch="x86_64" ;;
+        aarch64|arm64) arch="aarch64" ;;
+        *)
+            log_error "Unsupported architecture: $(uname -m)"
+            exit 1
+            ;;
     esac
 
-    echo "${arch}-${os}"
+    target="${arch}-${os}"
+    echo "$target"
 }
 
-# Check if command exists
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Download file with progress
-download_file() {
-    local url="$1"
-    local output="$2"
-
-    if command_exists curl; then
-        curl -sSL --fail --progress-bar "$url" -o "$output"
-    elif command_exists wget; then
-        wget -q --show-progress --progress=bar:force:noscroll "$url" -O "$output"
-    else
-        log_error "Neither curl nor wget found. Please install one of them."
-        exit 1
-    fi
-}
-
-# Get latest release information from GitHub API
-get_latest_release() {
-    local api_url="https://api.github.com/repos/$GITHUB_REPO/releases/latest"
-    local response
+# Get latest release version from GitHub API
+get_latest_version() {
+    local api_url="$GITHUB_API_URL/repos/$REPO_OWNER/$REPO_NAME/releases/latest"
 
     log_info "Fetching latest release information..."
 
-    if command_exists curl; then
-        response=$(curl -sSL "$api_url")
-    elif command_exists wget; then
-        response=$(wget -qO- "$api_url")
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$api_url" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/'
+    elif command -v wget >/dev/null 2>&1; then
+        wget -qO- "$api_url" | grep '"tag_name":' | sed -E 's/.*"tag_name": *"([^"]+)".*/\1/'
     else
-        log_error "Neither curl nor wget found. Please install one of them."
+        log_error "Neither curl nor wget is available. Please install one of them."
+        exit 1
+    fi
+}
+
+# Download and verify checksum (mandatory)
+download_and_verify() {
+    local download_url="$1"
+    local filename="$2"
+    local temp_dir="$3"
+    local version="$4"
+
+    log_info "Downloading $filename..."
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fsSL "$download_url" -o "$temp_dir/$filename"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q "$download_url" -O "$temp_dir/$filename"
+    else
+        log_error "Neither curl nor wget is available."
         exit 1
     fi
 
-    echo "$response"
-}
+    # Download and verify checksum (mandatory)
+    # Checksum file is named without the archive extension (e.g., multi-agent-config-aarch64-apple-darwin.sha256)
+    local base_filename="${filename%.tar.gz}"
+    base_filename="${base_filename%.zip}"
+    local checksum_url="${GITHUB_DOWNLOAD_URL}/${REPO_OWNER}/${REPO_NAME}/releases/download/${version}/${base_filename}.sha256"
+    local checksum_file="$temp_dir/${base_filename}.sha256"
 
-# Extract download URL for the target platform
-get_download_url() {
-    local release_json="$1"
-    local target="$2"
-    local binary_pattern="${BINARY_NAME}-${target}\.tar\.gz"
-
-    # Try to extract download URL using basic shell tools
-    # Look for browser_download_url containing our target pattern
-    echo "$release_json" | grep -o '"browser_download_url": *"[^"]*"' | \
-        grep -o 'https://[^"]*' | \
-        grep "$binary_pattern" | \
-        head -n1
-}
-
-# Get checksum URL for verification
-# Checksum file is named without the archive extension (e.g., project-aarch64-apple-darwin.sha256)
-get_checksum_url() {
-    local release_json="$1"
-    local target="$2"
-    local checksum_pattern="${BINARY_NAME}-${target}\.sha256"
-
-    echo "$release_json" | grep -o '"browser_download_url": *"[^"]*"' | \
-        grep -o 'https://[^"]*' | \
-        grep "$checksum_pattern" | \
-        head -n1
-}
-
-# Verify file checksum (mandatory)
-verify_checksum() {
-    local file="$1"
-    local checksum_file="$2"
-
-    if [ ! -f "$checksum_file" ]; then
-        log_error "Checksum file not available."
-        log_error "Checksum verification is mandatory for security."
-        return 1
+    log_info "Downloading checksum file..."
+    if command -v curl >/dev/null 2>&1; then
+        if ! curl -fsSL "$checksum_url" -o "$checksum_file" 2>/dev/null; then
+            log_error "Checksum file not available at: $checksum_url"
+            log_error "Checksum verification is mandatory for security."
+            exit 1
+        fi
+    else
+        log_error "curl is required for checksum download."
+        exit 1
     fi
 
     log_info "Verifying checksum..."
-
     # Extract expected hash and verify directly
-    local expected_sum=$(cut -d' ' -f1 "$checksum_file")
-    local actual_sum
+    local expected_hash=$(cut -d' ' -f1 "$checksum_file")
+    local actual_hash
 
-    if command_exists sha256sum; then
-        actual_sum=$(sha256sum "$file" | cut -d' ' -f1)
-    elif command_exists shasum; then
-        actual_sum=$(shasum -a 256 "$file" | cut -d' ' -f1)
+    if command -v sha256sum >/dev/null 2>&1; then
+        actual_hash=$(sha256sum "$temp_dir/$filename" | cut -d' ' -f1)
+    elif command -v shasum >/dev/null 2>&1; then
+        actual_hash=$(shasum -a 256 "$temp_dir/$filename" | cut -d' ' -f1)
     else
         log_error "No checksum utility available (sha256sum or shasum required)."
         log_error "Checksum verification is mandatory for security."
-        return 1
+        exit 1
     fi
 
-    if [ "$expected_sum" = "$actual_sum" ]; then
-        log_info "Checksum verification passed"
-        return 0
+    if [ "$expected_hash" = "$actual_hash" ]; then
+        log_success "Checksum verification passed"
     else
         log_error "Checksum verification failed!"
-        log_error "Expected: $expected_sum"
-        log_error "Actual:   $actual_sum"
-        return 1
+        log_error "Expected: $expected_hash"
+        log_error "Actual:   $actual_hash"
+        exit 1
     fi
 }
 
 # Extract archive based on file extension
 extract_archive() {
-    local archive="$1"
-    local dest_dir="$2"
+    local archive_file="$1"
+    local temp_dir="$2"
 
-    case "$archive" in
+    case "$archive_file" in
+        *.tar.gz|*.tgz)
+            log_info "Extracting tar.gz archive..."
+            tar -xzf "$temp_dir/$archive_file" -C "$temp_dir"
+            ;;
         *.zip)
-            if command_exists unzip; then
-                unzip -q "$archive" -d "$dest_dir"
+            log_info "Extracting zip archive..."
+            if command -v unzip >/dev/null 2>&1; then
+                unzip -q "$temp_dir/$archive_file" -d "$temp_dir"
             else
-                log_error "unzip command not found. Please install unzip."
+                log_error "unzip is not available. Please install unzip to extract the archive."
                 exit 1
             fi
             ;;
-        *.tar.gz)
-            tar -xzf "$archive" -C "$dest_dir"
-            ;;
         *)
-            log_error "Unsupported archive format: $archive"
+            log_error "Unsupported archive format: $archive_file"
             exit 1
             ;;
     esac
 }
 
-# Extract version from release JSON
-get_version() {
-    local release_json="$1"
-    echo "$release_json" | grep -o '"tag_name": *"[^"]*"' | \
-        grep -o 'multi-agent-config-v[0-9][^"]*' | head -n1 | sed 's/^multi-agent-config-v//'
+# Check if binary needs to be replaced
+check_existing_installation() {
+    local install_path="$1"
+
+    if [ -f "$install_path" ]; then
+        if [ -t 0 ]; then  # Check if we have a TTY (interactive)
+            echo -n "$(basename "$install_path") is already installed at $install_path. Replace it? [y/N]: "
+            read -r response
+            case "$response" in
+                [yY]|[yY][eE][sS])
+                    return 0
+                    ;;
+                *)
+                    log_info "Installation cancelled by user"
+                    exit 0
+                    ;;
+            esac
+        else
+            log_warn "$(basename "$install_path") already exists at $install_path, replacing..."
+            return 0
+        fi
+    fi
 }
 
-# Main installation function
 main() {
-    log_info "Installing Multi Agent Config..."
+    log_info "Installing $TOOL_NAME..."
 
-    # Detect target platform
+    # Detect platform
     local target
     target=$(detect_platform)
     log_info "Detected platform: $target"
 
-    # Get latest release information
-    local release_json
-    release_json=$(get_latest_release)
-
-    # Extract version, download URL, and checksum URL
-    local version download_url checksum_url
-    version=$(get_version "$release_json")
-    download_url=$(get_download_url "$release_json" "$target")
-    checksum_url=$(get_checksum_url "$release_json" "$target")
-
+    # Get latest version
+    local version
+    version=$(get_latest_version)
     if [ -z "$version" ]; then
-        log_error "Could not determine latest version"
+        log_error "Failed to get latest version"
         exit 1
     fi
-
-    if [ -z "$download_url" ]; then
-        log_error "No release found for platform: $target"
-        log_info "Available releases:"
-        echo "$release_json" | grep -o '"browser_download_url": *"[^"]*"' | \
-            grep -o 'https://[^"]*' | sed 's/^/  /'
-        exit 1
-    fi
-
     log_info "Latest version: $version"
-    log_info "Download URL: $download_url"
 
-    # Create install directory if it doesn't exist
-    if [ ! -d "$INSTALL_DIR" ]; then
-        log_info "Creating install directory: $INSTALL_DIR"
-        mkdir -p "$INSTALL_DIR"
+    # Construct download URL (Windows uses .zip, others use .tar.gz)
+    local extension="tar.gz"
+    if [[ "$target" == *"windows"* ]]; then
+        extension="zip"
     fi
+    local filename="${TOOL_NAME}-${target}.${extension}"
+    local download_url="$GITHUB_DOWNLOAD_URL/$REPO_OWNER/$REPO_NAME/releases/download/$version/$filename"
 
-    # Create temporary directory for download and extraction
+    # Create temporary directory
     local temp_dir
     temp_dir=$(mktemp -d)
     trap "rm -rf \"$temp_dir\"" EXIT
 
-    local archive_file="$temp_dir/archive.zip"
-    local checksum_file="$temp_dir/checksum.sha256"
-
-    # Download archive
-    log_info "Downloading $BINARY_NAME v$version..."
-    download_file "$download_url" "$archive_file"
-
-    # Download and verify checksum (mandatory)
-    if [ -z "$checksum_url" ]; then
-        log_error "No checksum file available in release."
-        log_error "Checksum verification is mandatory for security."
-        exit 1
-    fi
-
-    log_info "Downloading checksum file..."
-    download_file "$checksum_url" "$checksum_file"
-
-    if ! verify_checksum "$archive_file" "$checksum_file"; then
-        log_error "Checksum verification failed, aborting installation"
-        exit 1
-    fi
+    # Download and verify
+    download_and_verify "$download_url" "$filename" "$temp_dir" "$version"
 
     # Extract archive
-    log_info "Extracting archive..."
-    extract_archive "$archive_file" "$temp_dir"
+    extract_archive "$filename" "$temp_dir"
 
-    # Find the binary in the extracted contents
-    local binary_path
-    binary_path=$(find "$temp_dir" -name "$BINARY_NAME" -type f | head -n1)
-
-    if [ -z "$binary_path" ]; then
-        log_error "Could not find binary '$BINARY_NAME' in archive"
-        exit 1
+    # Find the binary (handle potential directory structure)
+    local binary_name="$TOOL_NAME"
+    if [ "$(uname -s)" = "MINGW*" ] || [ "$(uname -s)" = "MSYS*" ] || [ "$(uname -s)" = "CYGWIN*" ]; then
+        binary_name="${TOOL_NAME}.exe"
     fi
 
-    # Make executable and move to install directory
-    chmod +x "$binary_path"
-    local install_path="$INSTALL_DIR/$BINARY_NAME"
-    mv "$binary_path" "$install_path"
+    local binary_path
+    if [ -f "$temp_dir/$binary_name" ]; then
+        binary_path="$temp_dir/$binary_name"
+    else
+        # Look for binary in subdirectories
+        binary_path=$(find "$temp_dir" -name "$binary_name" -type f | head -1)
+        if [ -z "$binary_path" ]; then
+            log_error "Could not find $binary_name in the extracted archive"
+            exit 1
+        fi
+    fi
 
-    log_success "$BINARY_NAME v$version installed to $install_path"
+    # Create install directory if it doesn't exist
+    mkdir -p "$INSTALL_DIR"
+
+    # Check for existing installation
+    local install_path="$INSTALL_DIR/$TOOL_NAME"
+    if [ "$(uname -s)" = "MINGW*" ] || [ "$(uname -s)" = "MSYS*" ] || [ "$(uname -s)" = "CYGWIN*" ]; then
+        install_path="${install_path}.exe"
+    fi
+
+    check_existing_installation "$install_path"
+
+    # Install binary
+    log_info "Installing to $install_path..."
+    cp "$binary_path" "$install_path"
+    chmod +x "$install_path"
+
+    log_success "$TOOL_NAME installed successfully!"
+    log_info "Binary location: $install_path"
 
     # Check if install directory is in PATH
     case ":$PATH:" in
-        *":$INSTALL_DIR:"*) ;;
+        *":$INSTALL_DIR:"*)
+            log_success "$INSTALL_DIR is already in your PATH"
+            ;;
         *)
-            log_warning "$INSTALL_DIR is not in your PATH"
-            log_info "Add it to your PATH with: export PATH=\"\$PATH:$INSTALL_DIR\""
+            log_warn "$INSTALL_DIR is not in your PATH"
+            log_info "Add it to your PATH by adding this line to your shell configuration file:"
+            log_info "  export PATH=\"$INSTALL_DIR:\$PATH\""
             ;;
     esac
 
-    # Verify installation
-    if [ -x "$install_path" ]; then
-        log_info "Verifying installation..."
-        "$install_path" --version || log_warning "Could not verify installation"
+    # Test installation
+    if command -v "$TOOL_NAME" >/dev/null 2>&1; then
+        log_success "Installation verified: $TOOL_NAME is available"
+        log_info "Version: $("$TOOL_NAME" --version 2>/dev/null || "$TOOL_NAME" version 2>/dev/null || echo "unable to determine")"
+    else
+        log_warn "Installation completed, but $TOOL_NAME is not immediately available"
+        log_info "You may need to restart your shell or source your shell configuration"
     fi
-
-    log_success "Installation complete! Run '$BINARY_NAME --help' to get started."
 }
 
-# Run main function
 main "$@"
