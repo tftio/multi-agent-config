@@ -1,0 +1,85 @@
+# Example multi-agent-config Configuration
+# This file demonstrates all features of the unified MCP server configuration
+
+[settings]
+version = "1.0"
+default_targets = ["cursor", "opencode", "codex", "claude-code"]
+
+# Environment Variables Section
+# Define variables that can be referenced throughout the configuration
+[env]
+# Reference shell environment variables with ${VAR}
+GITHUB_TOKEN = "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+
+# Define custom variables
+API_BASE_URL = "https://api.example.com"
+API_VERSION = "v1"
+
+# Nested variable references (up to 10 levels)
+FULL_API_URL = "{API_BASE_URL}/{API_VERSION}"
+
+# ============================================================================
+# MCP Servers Configuration
+# ============================================================================
+
+# Example 1: Basic STDIO Server for All Tools
+[mcp.servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "/home/user/projects"]
+enabled = true
+targets = ["all"]
+
+# Example 2: STDIO Server with Environment Variables
+[mcp.servers.github]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-github"]
+enabled = true
+targets = ["all"]
+
+[mcp.servers.github.env]
+GITHUB_PERSONAL_ACCESS_TOKEN = "{GITHUB_TOKEN}"
+
+# Example 3: HTTP Server (opencode, codex, claude-code only)
+[mcp.servers.remote-api]
+url = "{FULL_API_URL}/mcp"
+bearer_token = "{GITHUB_TOKEN}"
+enabled = true
+targets = ["opencode", "codex", "claude-code"]
+
+# Example 4: Cursor-Specific Server with Cursor Features
+[mcp.servers.cursor-brave]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-brave-search"]
+enabled = true
+targets = ["cursor"]
+disabled = false
+autoApprove = ["brave_search"]
+
+[mcp.servers.cursor-brave.env]
+BRAVE_API_KEY = "${BRAVE_SEARCH_API_KEY}"
+
+# Example 5: Codex-Specific Server with Timeout Configuration
+[mcp.servers.codex-custom]
+command = "node"
+args = ["/path/to/custom-mcp-server.js"]
+enabled = true
+targets = ["codex"]
+startup_timeout_sec = 45
+tool_timeout_sec = 120
+
+[mcp.servers.codex-custom.env]
+CUSTOM_API_KEY = "${MY_API_KEY}"
+
+# Example 6: Multi-Tool Server (Cursor + opencode only)
+[mcp.servers.multi-tool]
+command = "python"
+args = ["-m", "mcp_server"]
+enabled = true
+targets = ["cursor", "opencode"]
+
+# Example 7: Disabled Server (for temporary disabling)
+[mcp.servers.experimental]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-experimental"]
+enabled = false
+targets = ["all"]
