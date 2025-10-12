@@ -6,6 +6,7 @@
 pub mod config;
 pub mod error;
 pub mod expand;
+pub mod file_ops;
 pub mod transform;
 
 pub use config::{

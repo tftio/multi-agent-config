@@ -31,7 +31,7 @@ pub enum MultiAgentError {
 
     /// File operation error
     #[error("File operation error: {0}")]
-    FileOpError(String),
+    FileOpError(#[from] crate::file_ops::writer::FileOpError),
 
     /// CLI argument error
     #[error("CLI error: {0}")]
