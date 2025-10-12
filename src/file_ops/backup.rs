@@ -1,13 +1,15 @@
 //! Backup creation and restoration
 
-use std::fs;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 #[allow(clippy::format_collect)]
 /// Create a backup of an existing file
 ///
-/// Creates a backup with `.backup` extension. If the original file doesn't exist,
-/// no backup is created and Ok(None) is returned.
+/// Creates a backup with `.backup` extension. If the original file doesn't
+/// exist, no backup is created and Ok(None) is returned.
 ///
 /// # Arguments
 ///

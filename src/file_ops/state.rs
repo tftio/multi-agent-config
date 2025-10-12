@@ -3,9 +3,11 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::fs;
-use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    io::Read,
+    path::{Path, PathBuf},
+};
 
 /// State file structure tracking generated configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]

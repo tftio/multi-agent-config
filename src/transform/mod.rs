@@ -1,6 +1,7 @@
 //! Format transformation module
 //!
-//! This module handles transformation of unified configuration into tool-specific formats.
+//! This module handles transformation of unified configuration into
+//! tool-specific formats.
 
 pub mod claude_code;
 pub mod codex;

@@ -1,8 +1,6 @@
 //! Atomic file writing operations
 
-use std::fs;
-use std::io::Write;
-use std::path::Path;
+use std::{fs, io::Write, path::Path};
 use tempfile::NamedTempFile;
 
 /// Error type for file operations
@@ -36,7 +34,8 @@ pub enum FileOpError {
 ///
 /// * `path` - Target file path
 /// * `content` - Content to write
-/// * `permissions` - Optional file permissions (Unix mode, e.g., 0o600). Defaults to 0o600 on Unix.
+/// * `permissions` - Optional file permissions (Unix mode, e.g., 0o600).
+///   Defaults to 0o600 on Unix.
 ///
 /// # Returns
 ///
@@ -45,7 +44,8 @@ pub enum FileOpError {
 ///
 /// # Errors
 ///
-/// Returns error if parent directory cannot be created, write fails, or permissions cannot be set
+/// Returns error if parent directory cannot be created, write fails, or
+/// permissions cannot be set
 pub fn write_file_atomic(
     path: &Path,
     content: &str,
@@ -81,7 +81,8 @@ pub fn write_file_atomic(
             .map_err(|e| FileOpError::Permission(e.to_string()))?;
     }
 
-    // On Windows, permissions parameter is ignored (Windows has different permission model)
+    // On Windows, permissions parameter is ignored (Windows has different
+    // permission model)
     #[cfg(windows)]
     {
         let _ = permissions; // Suppress unused warning

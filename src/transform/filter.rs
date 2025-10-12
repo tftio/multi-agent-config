@@ -11,7 +11,8 @@ use std::collections::HashMap;
 ///
 /// * `servers` - All servers from configuration
 /// * `tool_name` - Tool to filter for
-/// * `default_targets` - Default targets from settings (empty if none specified)
+/// * `default_targets` - Default targets from settings (empty if none
+///   specified)
 ///
 /// # Returns
 ///
@@ -208,7 +209,8 @@ mod tests {
             create_http_server(vec!["cursor".to_string()], true),
         );
 
-        // HTTP servers should be included in filtering (the transformer will handle exclusion)
+        // HTTP servers should be included in filtering (the transformer will handle
+        // exclusion)
         let filtered = filter_servers_for_tool(&servers, ToolName::Cursor, &[]);
         assert_eq!(filtered.len(), 1);
     }

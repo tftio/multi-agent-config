@@ -75,28 +75,28 @@ impl MultiAgentError {
         match self {
             Self::Config(ConfigError::FileNotFound(path)) => {
                 format!(
-                    "Error: Configuration file not found: {}\n\n\
-                     Suggestion: Run 'multi-agent-config init' to create a template configuration.",
+                    "Error: Configuration file not found: {}\n\nSuggestion: Run \
+                     'multi-agent-config init' to create a template configuration.",
                     path.display()
                 )
             }
             Self::Config(ConfigError::PermissionDenied(path)) => {
                 format!(
-                    "Error: Permission denied: {}\n\n\
-                     Suggestion: Check file permissions and ensure you have read access.",
+                    "Error: Permission denied: {}\n\nSuggestion: Check file permissions and \
+                     ensure you have read access.",
                     path.display()
                 )
             }
             Self::Config(ConfigError::ParseError { message, line }) => {
                 format!(
-                    "Error: Parse error at line {line}: {message}\n\n\
-                     Suggestion: Check TOML syntax at the indicated line."
+                    "Error: Parse error at line {line}: {message}\n\nSuggestion: Check TOML \
+                     syntax at the indicated line."
                 )
             }
             Self::Config(ConfigError::ValidationError(msg)) => {
                 format!(
-                    "Error: Validation error: {msg}\n\n\
-                     Suggestion: Run 'multi-agent-config validate' to see all validation errors."
+                    "Error: Validation error: {msg}\n\nSuggestion: Run 'multi-agent-config \
+                     validate' to see all validation errors."
                 )
             }
             _ => format!("Error: {self}"),

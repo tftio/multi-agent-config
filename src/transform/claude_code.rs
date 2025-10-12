@@ -2,9 +2,10 @@
 //!
 //! Claude Code uses the same format as opencode.ai
 
-use crate::config::types::{ServerConfig, ToolName};
-use crate::transform::filter::filter_servers_for_tool;
-use crate::transform::opencode::OpencodeServer;
+use crate::{
+    config::types::{ServerConfig, ToolName},
+    transform::{filter::filter_servers_for_tool, opencode::OpencodeServer},
+};
 use serde::Serialize;
 use std::collections::HashMap;
 

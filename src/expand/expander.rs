@@ -53,7 +53,8 @@ impl std::fmt::Display for ExpansionError {
 
 impl std::error::Error for ExpansionError {}
 
-/// Variable expander that handles both shell environment and config [env] section
+/// Variable expander that handles both shell environment and config [env]
+/// section
 pub struct Expander {
     /// Variables from [env] section of config
     env_section: HashMap<String, String>,
@@ -96,7 +97,8 @@ impl Expander {
     /// Expand shell environment variables (${VAR} syntax)
     ///
     /// Replaces all `${VAR}` patterns with values from shell environment.
-    /// Undefined variables are replaced with empty string and generate a warning.
+    /// Undefined variables are replaced with empty string and generate a
+    /// warning.
     ///
     /// # Arguments
     ///
@@ -108,7 +110,8 @@ impl Expander {
     ///
     /// # Panics
     ///
-    /// May panic if regex compilation fails (should never happen with hardcoded pattern)
+    /// May panic if regex compilation fails (should never happen with hardcoded
+    /// pattern)
     pub fn expand_shell_vars(&mut self, value: &str) -> String {
         use regex::Regex;
 
@@ -145,11 +148,13 @@ impl Expander {
         result
     }
 
-    /// Expand config environment variables ({VAR} syntax) with circular reference detection
+    /// Expand config environment variables ({VAR} syntax) with circular
+    /// reference detection
     ///
     /// Replaces all `{VAR}` patterns with values from [env] section.
     /// Recursively expands nested references with depth tracking.
-    /// Undefined variables are replaced with empty string and generate a warning.
+    /// Undefined variables are replaced with empty string and generate a
+    /// warning.
     ///
     /// # Arguments
     ///
@@ -168,7 +173,8 @@ impl Expander {
         self.expand_env_vars_recursive(value, 0, &mut visited)
     }
 
-    /// Recursively expand env variables with depth and circular reference tracking
+    /// Recursively expand env variables with depth and circular reference
+    /// tracking
     fn expand_env_vars_recursive(
         &mut self,
         value: &str,
@@ -249,7 +255,8 @@ impl Expander {
     /// # Returns
     ///
     /// * `Ok(String)` - Fully expanded string
-    /// * `Err(ExpansionError)` - Expansion error (circular reference or max depth)
+    /// * `Err(ExpansionError)` - Expansion error (circular reference or max
+    ///   depth)
     ///
     /// # Errors
     ///

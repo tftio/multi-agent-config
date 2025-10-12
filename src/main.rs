@@ -4,9 +4,9 @@
 
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
+use workhelix_cli_common::{DoctorCheck, DoctorChecks, RepoInfo};
 
 mod cli;
-mod completions;
 mod doctor;
 
 use cli::commands::{compile_command, diff_command, init_command, validate_command};
@@ -81,6 +81,21 @@ enum Commands {
 
     /// Run health check and diagnostics
     Doctor,
+
+    /// Update to latest version
+    Update {
+        /// Specific version to install
+        #[arg(long)]
+        version: Option<String>,
+
+        /// Force update even if already up-to-date
+        #[arg(short, long)]
+        force: bool,
+
+        /// Custom installation directory
+        #[arg(long)]
+        install_dir: Option<PathBuf>,
+    },
 }
 
 /// Get default config path
@@ -137,12 +152,42 @@ fn main() {
             }
         },
         Commands::Completions { shell } => {
-            completions::generate_completions(shell);
+            workhelix_cli_common::completions::generate_completions::<Cli>(shell);
             0
         }
         Commands::Doctor => {
-            doctor::run_doctor();
-            0
+            struct MultiAgentConfigTool;
+
+            impl DoctorChecks for MultiAgentConfigTool {
+                fn repo_info() -> RepoInfo {
+                    RepoInfo::new("tftio", "multi-agent-config", "v")
+                }
+
+                fn current_version() -> &'static str {
+                    VERSION
+                }
+
+                fn tool_checks(&self) -> Vec<DoctorCheck> {
+                    doctor::tool_specific_checks(&default_config_path())
+                }
+            }
+
+            let tool = MultiAgentConfigTool;
+            workhelix_cli_common::doctor::run_doctor(&tool)
+        }
+        Commands::Update {
+            version,
+            force,
+            install_dir,
+        } => {
+            let repo_info = RepoInfo::new("tftio", "multi-agent-config", "v");
+            workhelix_cli_common::update::run_update(
+                &repo_info,
+                VERSION,
+                version.as_deref(),
+                force,
+                install_dir.as_deref(),
+            )
         }
     };
 

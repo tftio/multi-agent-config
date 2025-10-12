@@ -169,12 +169,14 @@ fn validate_stdio_server(
 
     // Check if command executable exists (warning only)
     if !server.command.contains('/') && !server.command.contains('\\') {
-        // It's a command name, not a path - we could check PATH but that's expensive
-        // For now, we'll just validate it's not empty (done above)
+        // It's a command name, not a path - we could check PATH but that's
+        // expensive For now, we'll just validate it's not empty (done
+        // above)
     }
 
     // Warn about bearer_token on STDIO server (should only be on HTTP)
-    // This is checked implicitly by the type system - STDIO doesn't have bearer_token field
+    // This is checked implicitly by the type system - STDIO doesn't have
+    // bearer_token field
 }
 
 /// Validate HTTP server configuration

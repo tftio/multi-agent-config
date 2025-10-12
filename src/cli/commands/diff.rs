@@ -1,10 +1,13 @@
 //! Diff command implementation
 
-use multi_agent_config::config::{ToolName, parse_and_expand_config, validate_config};
-use multi_agent_config::error::MultiAgentError;
-use multi_agent_config::file_ops::generate_file_diff;
-use multi_agent_config::transform::{
-    transform_for_claude_code, transform_for_codex, transform_for_cursor, transform_for_opencode,
+use multi_agent_config::{
+    config::{ToolName, parse_and_expand_config, validate_config},
+    error::MultiAgentError,
+    file_ops::generate_file_diff,
+    transform::{
+        transform_for_claude_code, transform_for_codex, transform_for_cursor,
+        transform_for_opencode,
+    },
 };
 use std::path::{Path, PathBuf};
 

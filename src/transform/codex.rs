@@ -1,7 +1,9 @@
 //! Codex TOML transformer
 
-use crate::config::types::{HttpServerConfig, ServerConfig, StdioServerConfig, ToolName};
-use crate::transform::filter::filter_servers_for_tool;
+use crate::{
+    config::types::{HttpServerConfig, ServerConfig, StdioServerConfig, ToolName},
+    transform::filter::filter_servers_for_tool,
+};
 use serde::Serialize;
 use std::collections::HashMap;
 

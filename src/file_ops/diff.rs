@@ -1,13 +1,13 @@
 //! Diff generation for showing configuration changes
 
-use std::fs;
-use std::path::Path;
+use std::{fs, path::Path};
 
 #[allow(clippy::format_collect)]
 #[allow(clippy::missing_panics_doc)]
 /// Generate a unified diff between two strings
 ///
-/// Creates a unified diff format showing the differences between old and new content.
+/// Creates a unified diff format showing the differences between old and new
+/// content.
 ///
 /// # Arguments
 ///

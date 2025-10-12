@@ -72,6 +72,6 @@ mod tests {
         let _ = is_stderr_tty();
     }
 
-    // Note: print_* functions can't be easily unit tested without capturing output
-    // They're tested indirectly through integration tests
+    // Note: print_* functions can't be easily unit tested without capturing
+    // output They're tested indirectly through integration tests
 }

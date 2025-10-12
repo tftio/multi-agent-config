@@ -1,7 +1,9 @@
 //! Validate command implementation
 
-use multi_agent_config::config::{parse_and_expand_config, validate_config};
-use multi_agent_config::error::MultiAgentError;
+use multi_agent_config::{
+    config::{parse_and_expand_config, validate_config},
+    error::MultiAgentError,
+};
 use std::path::Path;
 
 /// Validate configuration file

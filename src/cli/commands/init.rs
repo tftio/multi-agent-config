@@ -1,7 +1,9 @@
 //! Init command implementation
 
-use multi_agent_config::error::MultiAgentError;
-use multi_agent_config::file_ops::{create_backup, write_file_atomic};
+use multi_agent_config::{
+    error::MultiAgentError,
+    file_ops::{create_backup, write_file_atomic},
+};
 use std::path::Path;
 
 /// Template configuration content

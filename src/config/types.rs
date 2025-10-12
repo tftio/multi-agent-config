@@ -1,6 +1,7 @@
 //! Core data structures for multi-agent-config
 //!
-//! This module defines the types that represent the unified configuration schema.
+//! This module defines the types that represent the unified configuration
+//! schema.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

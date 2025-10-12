@@ -1,12 +1,11 @@
 //! TOML configuration file parsing
 
-use crate::config::types::{MultiAgentConfig, ServerConfig};
-use crate::error::{ConfigError, MultiAgentError};
-use crate::expand::Expander;
-use std::collections::HashMap;
-use std::env;
-use std::fs;
-use std::path::Path;
+use crate::{
+    config::types::{MultiAgentConfig, ServerConfig},
+    error::{ConfigError, MultiAgentError},
+    expand::Expander,
+};
+use std::{collections::HashMap, env, fs, path::Path};
 
 /// Parse configuration from a TOML file
 ///
@@ -72,7 +71,8 @@ pub fn read_file_utf8(path: &Path) -> Result<String, ConfigError> {
 
 /// Parse and expand configuration from a TOML file
 ///
-/// This function parses the configuration and expands all environment variables.
+/// This function parses the configuration and expands all environment
+/// variables.
 ///
 /// # Arguments
 ///
@@ -85,7 +85,8 @@ pub fn read_file_utf8(path: &Path) -> Result<String, ConfigError> {
 ///
 /// # Errors
 ///
-/// Returns error if file cannot be read, TOML is invalid, or variable expansion fails
+/// Returns error if file cannot be read, TOML is invalid, or variable expansion
+/// fails
 pub fn parse_and_expand_config(path: &Path) -> Result<MultiAgentConfig, MultiAgentError> {
     // Parse the configuration
     let mut config = parse_config_file(path)?;
