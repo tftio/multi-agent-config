@@ -9,6 +9,7 @@ mod cli;
 mod completions;
 mod doctor;
 
+use cli::commands::init_command;
 use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
@@ -97,35 +98,56 @@ fn main() {
     // Get config path, using default if not provided
     let config_path = cli.config.unwrap_or_else(default_config_path);
 
-    let result = match cli.command {
+    let exit_code = match cli.command {
         Commands::Version => {
             version_command();
-            Ok(())
+            0
         }
         Commands::License => {
             license_command();
-            Ok(())
+            0
         }
-        Commands::Init { force } => init_command(&config_path, force),
-        Commands::Validate => validate_command(&config_path, cli.verbose),
+        Commands::Init { force } => match init_command(&config_path, force) {
+            Ok(()) => 0,
+            Err(e) => {
+                eprintln!("{}", e.format_with_suggestion());
+                e.exit_code()
+            }
+        },
+        Commands::Validate => match validate_command(&config_path, cli.verbose) {
+            Ok(()) => 0,
+            Err(e) => {
+                print_error(&e);
+                1
+            }
+        },
         Commands::Compile { tool, dry_run } => {
-            compile_command(&config_path, tool, dry_run, cli.verbose)
+            match compile_command(&config_path, tool, dry_run, cli.verbose) {
+                Ok(()) => 0,
+                Err(e) => {
+                    print_error(&e);
+                    1
+                }
+            }
         }
-        Commands::Diff { tool } => diff_command(&config_path, tool, cli.verbose),
+        Commands::Diff { tool } => match diff_command(&config_path, tool, cli.verbose) {
+            Ok(()) => 0,
+            Err(e) => {
+                print_error(&e);
+                1
+            }
+        },
         Commands::Completions { shell } => {
             completions::generate_completions(shell);
-            Ok(())
+            0
         }
         Commands::Doctor => {
             doctor::run_doctor();
-            Ok(())
+            0
         }
     };
 
-    if let Err(e) = result {
-        print_error(&e);
-        std::process::exit(1);
-    }
+    std::process::exit(exit_code);
 }
 
 /// Print version information
@@ -169,12 +191,6 @@ fn license_command() {
 
     println!();
     println!("For full license text, see LICENSE file in project root");
-}
-
-/// Initialize configuration (stub for Phase 5)
-fn init_command(_config_path: &PathBuf, _force: bool) -> Result<(), String> {
-    print_info("Init command not yet implemented (Phase 5)");
-    Ok(())
 }
 
 /// Validate configuration (stub for Phase 5)

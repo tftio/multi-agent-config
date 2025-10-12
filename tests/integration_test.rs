@@ -95,17 +95,33 @@ fn test_no_args_shows_help() {
     assert!(stderr.contains("Usage:") || stderr.contains("required"));
 }
 
-/// Test init command (stub)
+/// Test init command
 #[test]
 fn test_init_command() {
+    use tempfile::TempDir;
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("config.toml");
+
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "init"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "--config",
+            config_path.to_str().unwrap(),
+            "init",
+        ])
         .output()
         .expect("Failed to execute binary");
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("not yet implemented") || stdout.contains("Phase 5"));
+    assert!(stdout.contains("Configuration initialized"));
+    assert!(stdout.contains("Next steps"));
+
+    // Verify file was created
+    assert!(config_path.exists());
 }
 
 /// Test validate command (stub)
