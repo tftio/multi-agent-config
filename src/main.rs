@@ -9,7 +9,7 @@ mod cli;
 mod completions;
 mod doctor;
 
-use cli::commands::init_command;
+use cli::commands::{init_command, validate_command};
 use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
@@ -117,8 +117,8 @@ fn main() {
         Commands::Validate => match validate_command(&config_path, cli.verbose) {
             Ok(()) => 0,
             Err(e) => {
-                print_error(&e);
-                1
+                eprintln!("{}", e.format_with_suggestion());
+                e.exit_code()
             }
         },
         Commands::Compile { tool, dry_run } => {
@@ -191,12 +191,6 @@ fn license_command() {
 
     println!();
     println!("For full license text, see LICENSE file in project root");
-}
-
-/// Validate configuration (stub for Phase 5)
-fn validate_command(_config_path: &PathBuf, _verbose: bool) -> Result<(), String> {
-    print_info("Validate command not yet implemented (Phase 5)");
-    Ok(())
 }
 
 /// Compile configuration (stub for Phase 5)

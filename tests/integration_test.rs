@@ -124,17 +124,42 @@ fn test_init_command() {
     assert!(config_path.exists());
 }
 
-/// Test validate command (stub)
+/// Test validate command
 #[test]
 fn test_validate_command() {
+    use tempfile::TempDir;
+    use std::fs;
+
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("config.toml");
+
+    // Create valid config
+    let valid_config = r#"
+[settings]
+version = "1.0"
+
+[mcp.servers.test]
+command = "npx"
+args = ["-y", "package"]
+"#;
+    fs::write(&config_path, valid_config).unwrap();
+
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "validate"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "--config",
+            config_path.to_str().unwrap(),
+            "validate",
+        ])
         .output()
         .expect("Failed to execute binary");
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("not yet implemented") || stdout.contains("Phase 5"));
+    assert!(stdout.contains("valid"));
 }
 
 /// Test compile command (stub)
