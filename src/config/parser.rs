@@ -1,7 +1,10 @@
 //! TOML configuration file parsing
 
-use crate::config::types::MultiAgentConfig;
-use crate::error::ConfigError;
+use crate::config::types::{MultiAgentConfig, ServerConfig};
+use crate::error::{ConfigError, MultiAgentError};
+use crate::expand::Expander;
+use std::collections::HashMap;
+use std::env;
 use std::fs;
 use std::path::Path;
 
@@ -68,6 +71,74 @@ pub fn read_file_utf8(path: &Path) -> Result<String, ConfigError> {
             _ => ConfigError::IoError(e),
         }
     })
+}
+
+/// Parse and expand configuration from a TOML file
+///
+/// This function parses the configuration and expands all environment variables.
+///
+/// # Arguments
+///
+/// * `path` - Path to the TOML configuration file
+///
+/// # Returns
+///
+/// * `Ok(MultiAgentConfig)` - Successfully parsed and expanded configuration
+/// * `Err(MultiAgentError)` - Error reading, parsing, or expanding the file
+///
+/// # Errors
+///
+/// Returns error if file cannot be read, TOML is invalid, or variable expansion fails
+pub fn parse_and_expand_config(path: &Path) -> Result<MultiAgentConfig, MultiAgentError> {
+    // Parse the configuration
+    let mut config = parse_config_file(path)?;
+
+    // Get environment variables
+    let shell_env: HashMap<String, String> = env::vars().collect();
+
+    // Get [env] section
+    let env_section = config.env.clone().unwrap_or_default();
+
+    // Create expander
+    let mut expander = Expander::new(env_section, shell_env);
+
+    // Expand variables in all server configurations
+    for (_name, server) in &mut config.mcp.servers {
+        match server {
+            ServerConfig::Stdio(stdio) => {
+                // Expand command
+                stdio.command = expander.expand(&stdio.command)?;
+
+                // Expand args
+                for arg in &mut stdio.args {
+                    *arg = expander.expand(arg)?;
+                }
+
+                // Expand env vars if present
+                if let Some(server_env) = &mut stdio.env {
+                    for (_key, value) in server_env.iter_mut() {
+                        *value = expander.expand(value)?;
+                    }
+                }
+            }
+            ServerConfig::Http(http) => {
+                // Expand URL
+                http.url = expander.expand(&http.url)?;
+
+                // Expand bearer_token if present
+                if let Some(token) = &mut http.bearer_token {
+                    *token = expander.expand(token)?;
+                }
+            }
+        }
+    }
+
+    // Log warnings if any
+    for warning in expander.warnings() {
+        eprintln!("Warning: {}", warning);
+    }
+
+    Ok(config)
 }
 
 #[cfg(test)]
@@ -224,4 +295,85 @@ version = "1.0"
         assert!(result.is_err());
         matches!(result, Err(ConfigError::FileNotFound(_)));
     }
+
+    #[test]
+    fn test_parse_and_expand_with_env_vars() {
+        // Set up test environment variable
+        env::set_var("TEST_SHELL_VAR", "from_shell");
+
+        let toml_content = r#"
+[settings]
+version = "1.0"
+
+[env]
+CONFIG_VAR = "from_config"
+COMBINED = "${TEST_SHELL_VAR}_{CONFIG_VAR}"
+
+[mcp.servers.test-stdio]
+command = "npx"
+args = ["-y", "{CONFIG_VAR}"]
+
+[mcp.servers.test-stdio.env]
+API_KEY = "{COMBINED}"
+
+[mcp.servers.test-http]
+url = "https://{CONFIG_VAR}.example.com"
+bearer_token = "${TEST_SHELL_VAR}"
+"#;
+
+        let mut temp_file = NamedTempFile::new().unwrap();
+        temp_file.write_all(toml_content.as_bytes()).unwrap();
+
+        let result = parse_and_expand_config(temp_file.path());
+        assert!(result.is_ok());
+
+        let config = result.unwrap();
+
+        // Check STDIO server expansion
+        if let Some(ServerConfig::Stdio(stdio)) = config.mcp.servers.get("test-stdio") {
+            assert_eq!(stdio.command, "npx");
+            assert_eq!(stdio.args.len(), 2);
+            assert_eq!(stdio.args[0], "-y");
+            assert_eq!(stdio.args[1], "from_config");
+            assert_eq!(
+                stdio.env.as_ref().unwrap().get("API_KEY").unwrap(),
+                "from_shell_from_config"
+            );
+        } else {
+            panic!("test-stdio server not found or wrong type");
+        }
+
+        // Check HTTP server expansion
+        if let Some(ServerConfig::Http(http)) = config.mcp.servers.get("test-http") {
+            assert_eq!(http.url, "https://from_config.example.com");
+            assert_eq!(http.bearer_token.as_ref().unwrap(), "from_shell");
+        } else {
+            panic!("test-http server not found or wrong type");
+        }
+
+        // Clean up
+        env::remove_var("TEST_SHELL_VAR");
+    }
+
+    #[test]
+    fn test_parse_and_expand_circular_reference() {
+        let toml_content = r#"
+[settings]
+version = "1.0"
+
+[env]
+A = "{B}"
+B = "{A}"
+
+[mcp.servers.test]
+command = "{A}"
+"#;
+
+        let mut temp_file = NamedTempFile::new().unwrap();
+        temp_file.write_all(toml_content.as_bytes()).unwrap();
+
+        let result = parse_and_expand_config(temp_file.path());
+        assert!(result.is_err());
+    }
 }
+

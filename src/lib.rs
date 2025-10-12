@@ -8,8 +8,8 @@ pub mod error;
 pub mod expand;
 
 pub use config::{
-    MultiAgentConfig, ServerConfig, Settings, ToolName, ValidationError, parse_config_file,
-    validate_config,
+    parse_and_expand_config, parse_config_file, validate_config, MultiAgentConfig, ServerConfig,
+    Settings, ToolName, ValidationError,
 };
 pub use error::{
     ConfigError, EXIT_FILE_ERROR, EXIT_LOCK_ERROR, EXIT_PARTIAL_FAILURE, EXIT_SUCCESS,

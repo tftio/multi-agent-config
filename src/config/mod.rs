@@ -7,6 +7,6 @@ pub mod parser;
 pub mod types;
 pub mod validator;
 
-pub use parser::parse_config_file;
+pub use parser::{parse_and_expand_config, parse_config_file};
 pub use types::*;
 pub use validator::{ValidationError, validate_config};
