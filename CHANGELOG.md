@@ -40,5 +40,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Phase 4**: Atomic file operations, backups, state tracking, diff generation
 - **Phase 5**: CLI command implementations
 
-[Unreleased]: https://github.com/jfb/multi-agent-config/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/jfb/multi-agent-config/releases/tag/multi-agent-config-v0.1.1
+[Unreleased]: https://github.com/tftio/multi-agent-config/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/tftio/multi-agent-config/releases/tag/multi-agent-config-v0.1.1

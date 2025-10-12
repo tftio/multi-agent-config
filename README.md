@@ -1,7 +1,7 @@
 # multi-agent-config
 
-[![CI](https://github.com/jfb/multi-agent-config/workflows/CI/badge.svg)](https://github.com/jfb/multi-agent-config/actions/workflows/ci.yml)
-[![Release](https://github.com/jfb/multi-agent-config/workflows/Release/badge.svg)](https://github.com/jfb/multi-agent-config/actions/workflows/release.yml)
+[![CI](https://github.com/tftio/multi-agent-config/workflows/CI/badge.svg)](https://github.com/tftio/multi-agent-config/actions/workflows/ci.yml)
+[![Release](https://github.com/tftio/multi-agent-config/workflows/Release/badge.svg)](https://github.com/tftio/multi-agent-config/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **Unified Configuration Manager for AI Coding Tools**
@@ -30,23 +30,22 @@ Manage MCP (Model Context Protocol) server configurations for multiple AI coding
 
 ## Installation
 
-### From crates.io
+### From GitHub Releases (Recommended)
 
-```bash
-cargo install multi-agent-config
-```
+Download pre-built binaries from [Releases](https://github.com/tftio/multi-agent-config/releases).
+
+Available platforms:
+- macOS (Intel and Apple Silicon)
+- Linux x64
+- Windows x64
 
 ### From Source
 
 ```bash
-git clone https://github.com/jfb/multi-agent-config.git
+git clone https://github.com/tftio/multi-agent-config.git
 cd multi-agent-config
 cargo install --path .
 ```
-
-### From GitHub Releases
-
-Download pre-built binaries from [Releases](https://github.com/jfb/multi-agent-config/releases).
 
 ## Quick Start
 
@@ -272,5 +271,5 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Support
 
-- Issues: [GitHub Issues](https://github.com/jfb/multi-agent-config/issues)
+- Issues: [GitHub Issues](https://github.com/tftio/multi-agent-config/issues)
 - Email: jfb@workhelix.com

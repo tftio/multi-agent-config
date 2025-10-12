@@ -6,7 +6,7 @@ rust-version = "1.85.0"
 authors = ["James Felix Black <jfb@workhelix.com>"]
 description = "A multi-agent configuration and orchestration tool"
 license = "MIT"
-repository = "https://github.com/jfb/multi-agent-config"
+repository = "https://github.com/tftio/multi-agent-config"
 keywords = ["cli", "tool", "rust"]
 categories = ["command-line-utilities", "development-tools"]
 

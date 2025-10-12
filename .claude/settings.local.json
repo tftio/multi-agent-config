@@ -14,7 +14,11 @@
       "Bash(cargo deny check:*)",
       "Bash(cat:*)",
       "Bash(git tag:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh release view:*)",
+      "Bash(gh release edit:*)"
     ],
     "deny": [],
     "ask": []
