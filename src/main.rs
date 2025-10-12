@@ -108,7 +108,9 @@ fn main() {
         }
         Commands::Init { force } => init_command(&config_path, force),
         Commands::Validate => validate_command(&config_path, cli.verbose),
-        Commands::Compile { tool, dry_run } => compile_command(&config_path, tool, dry_run, cli.verbose),
+        Commands::Compile { tool, dry_run } => {
+            compile_command(&config_path, tool, dry_run, cli.verbose)
+        }
         Commands::Diff { tool } => diff_command(&config_path, tool, cli.verbose),
         Commands::Completions { shell } => {
             completions::generate_completions(shell);
@@ -193,11 +195,7 @@ fn compile_command(
 }
 
 /// Diff command (stub for Phase 5)
-fn diff_command(
-    _config_path: &PathBuf,
-    _tools: Vec<String>,
-    _verbose: bool,
-) -> Result<(), String> {
+fn diff_command(_config_path: &PathBuf, _tools: Vec<String>, _verbose: bool) -> Result<(), String> {
     print_info("Diff command not yet implemented (Phase 5)");
     Ok(())
 }

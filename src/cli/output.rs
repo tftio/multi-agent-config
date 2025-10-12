@@ -2,7 +2,7 @@
 
 use colored::*;
 use is_terminal::IsTerminal;
-use std::io::{stdout, stderr};
+use std::io::{stderr, stdout};
 
 /// Check if stdout is a TTY
 pub fn is_tty() -> bool {

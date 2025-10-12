@@ -64,7 +64,14 @@ fn test_license_subcommand() {
 #[test]
 fn test_subcommand_help() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "version", "--help"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "version",
+            "--help",
+        ])
         .output()
         .expect("Failed to execute binary");
 
@@ -157,7 +164,14 @@ fn test_doctor_command() {
 #[test]
 fn test_completions_command() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "completions", "bash"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "completions",
+            "bash",
+        ])
         .output()
         .expect("Failed to execute binary");
 
@@ -171,7 +185,14 @@ fn test_completions_command() {
 #[test]
 fn test_verbose_flag() {
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "--verbose", "version"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "--verbose",
+            "version",
+        ])
         .output()
         .expect("Failed to execute binary");
 

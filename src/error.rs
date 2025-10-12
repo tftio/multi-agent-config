@@ -39,9 +39,7 @@ impl MultiAgentError {
     pub fn exit_code(&self) -> i32 {
         match self {
             MultiAgentError::Config(config_err) => match config_err {
-                ConfigError::FileNotFound(_) | ConfigError::PermissionDenied(_) => {
-                    EXIT_FILE_ERROR
-                }
+                ConfigError::FileNotFound(_) | ConfigError::PermissionDenied(_) => EXIT_FILE_ERROR,
                 ConfigError::ParseError { .. }
                 | ConfigError::ValidationError(_)
                 | ConfigError::TomlError(_) => EXIT_VALIDATION_ERROR,
@@ -220,7 +218,10 @@ mod tests {
     #[test]
     fn test_validation_error_display() {
         let err = ConfigError::validation("missing required field");
-        assert_eq!(format!("{}", err), "Validation error: missing required field");
+        assert_eq!(
+            format!("{}", err),
+            "Validation error: missing required field"
+        );
     }
 
     #[test]
@@ -249,6 +250,9 @@ mod tests {
     #[test]
     fn test_multi_agent_error_display() {
         let err = MultiAgentError::EnvError("test env error".to_string());
-        assert_eq!(format!("{}", err), "Environment variable error: test env error");
+        assert_eq!(
+            format!("{}", err),
+            "Environment variable error: test env error"
+        );
     }
 }

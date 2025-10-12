@@ -217,7 +217,10 @@ mod tests {
 
     #[test]
     fn test_tool_name_from_str() {
-        assert_eq!(ToolName::from_str("claude-code"), Some(ToolName::ClaudeCode));
+        assert_eq!(
+            ToolName::from_str("claude-code"),
+            Some(ToolName::ClaudeCode)
+        );
         assert_eq!(ToolName::from_str("cursor"), Some(ToolName::Cursor));
         assert_eq!(ToolName::from_str("opencode"), Some(ToolName::Opencode));
         assert_eq!(ToolName::from_str("codex"), Some(ToolName::Codex));

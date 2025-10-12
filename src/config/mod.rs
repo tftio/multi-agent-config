@@ -9,4 +9,4 @@ pub mod validator;
 
 pub use parser::parse_config_file;
 pub use types::*;
-pub use validator::{validate_config, ValidationError};
+pub use validator::{ValidationError, validate_config};

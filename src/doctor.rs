@@ -20,7 +20,10 @@ pub fn run_doctor() -> i32 {
             has_warnings = true;
         }
         Ok(None) => {
-            println!("  ✅ Running latest version (v{})", env!("CARGO_PKG_VERSION"));
+            println!(
+                "  ✅ Running latest version (v{})",
+                env!("CARGO_PKG_VERSION")
+            );
         }
         Err(e) => {
             println!("  ⚠️  Failed to check for updates: {e}");

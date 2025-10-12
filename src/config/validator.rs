@@ -1,7 +1,8 @@
 //! Configuration schema validation
 
-use crate::config::types::{MultiAgentConfig, ServerConfig, StdioServerConfig, HttpServerConfig, ToolName};
-use crate::error::ConfigError;
+use crate::config::types::{
+    HttpServerConfig, MultiAgentConfig, ServerConfig, StdioServerConfig,
+};
 use regex::Regex;
 use std::collections::HashSet;
 
@@ -78,7 +79,10 @@ fn validate_settings(settings: &crate::config::types::Settings, errors: &mut Vec
     let version_regex = Regex::new(r"^\d+\.\d+(\.\d+)?$").unwrap();
     if !version_regex.is_match(&settings.version) {
         errors.push(ValidationError::with_context(
-            format!("Invalid version format '{}', expected semver (e.g., '1.0' or '1.0.0')", settings.version),
+            format!(
+                "Invalid version format '{}', expected semver (e.g., '1.0' or '1.0.0')",
+                settings.version
+            ),
             "settings.version",
         ));
     }
@@ -86,7 +90,10 @@ fn validate_settings(settings: &crate::config::types::Settings, errors: &mut Vec
     // Currently only version 1.0 is supported
     if !settings.version.starts_with("1.0") {
         errors.push(ValidationError::with_context(
-            format!("Unsupported version '{}', only '1.0' is currently supported", settings.version),
+            format!(
+                "Unsupported version '{}', only '1.0' is currently supported",
+                settings.version
+            ),
             "settings.version",
         ));
     }
@@ -97,7 +104,11 @@ fn validate_settings(settings: &crate::config::types::Settings, errors: &mut Vec
     for target in &settings.default_targets {
         if !valid_tools.contains(&target.as_str()) {
             errors.push(ValidationError::with_context(
-                format!("Invalid tool name '{}', must be one of: {}", target, valid_tools.join(", ")),
+                format!(
+                    "Invalid tool name '{}', must be one of: {}",
+                    target,
+                    valid_tools.join(", ")
+                ),
                 "settings.default_targets",
             ));
         }
@@ -136,7 +147,11 @@ fn validate_server(name: &str, server: &ServerConfig, errors: &mut Vec<Validatio
 }
 
 /// Validate STDIO server configuration
-fn validate_stdio_server(name: &str, server: &StdioServerConfig, errors: &mut Vec<ValidationError>) {
+fn validate_stdio_server(
+    name: &str,
+    server: &StdioServerConfig,
+    errors: &mut Vec<ValidationError>,
+) {
     let ctx = format!("mcp.servers.{}", name);
 
     // Command must not be empty
@@ -167,7 +182,10 @@ fn validate_http_server(name: &str, server: &HttpServerConfig, errors: &mut Vec<
     // URL must start with http:// or https://
     if !server.url.starts_with("http://") && !server.url.starts_with("https://") {
         errors.push(ValidationError::with_context(
-            format!("URL must start with 'http://' or 'https://', got '{}'", server.url),
+            format!(
+                "URL must start with 'http://' or 'https://', got '{}'",
+                server.url
+            ),
             &ctx,
         ));
     }
@@ -184,7 +202,11 @@ fn validate_targets(server_name: &str, targets: &[String], errors: &mut Vec<Vali
     for target in targets {
         if !valid_tools.contains(&target.as_str()) {
             errors.push(ValidationError::with_context(
-                format!("Invalid tool name '{}', must be one of: {}", target, valid_tools.join(", ")),
+                format!(
+                    "Invalid tool name '{}', must be one of: {}",
+                    target,
+                    valid_tools.join(", ")
+                ),
                 &ctx,
             ));
         }
@@ -205,8 +227,8 @@ fn validate_executable(command: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::types::{McpConfig, Settings};
     use std::collections::HashMap;
-    use crate::config::types::{Settings, McpConfig};
 
     fn create_minimal_valid_config() -> MultiAgentConfig {
         let mut servers = HashMap::new();
@@ -251,7 +273,11 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("Invalid version format")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("Invalid version format"))
+        );
     }
 
     #[test]
@@ -263,7 +289,11 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("Unsupported version")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("Unsupported version"))
+        );
     }
 
     #[test]
@@ -275,22 +305,28 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("Invalid tool name")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("Invalid tool name"))
+        );
     }
 
     #[test]
     fn test_validate_duplicate_targets_in_settings() {
         let mut config = create_minimal_valid_config();
-        config.settings.as_mut().unwrap().default_targets = vec![
-            "cursor".to_string(),
-            "cursor".to_string(),
-        ];
+        config.settings.as_mut().unwrap().default_targets =
+            vec!["cursor".to_string(), "cursor".to_string()];
 
         let result = validate_config(&config);
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("Duplicate target")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("Duplicate target"))
+        );
     }
 
     #[test]
@@ -302,7 +338,11 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("At least one MCP server")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("At least one MCP server"))
+        );
     }
 
     #[test]
@@ -336,7 +376,11 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("command cannot be empty")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("command cannot be empty"))
+        );
     }
 
     #[test]
@@ -365,7 +409,11 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.message.contains("must start with 'http://'")));
+        assert!(
+            errors
+                .iter()
+                .any(|e| e.message.contains("must start with 'http://'"))
+        );
     }
 
     #[test]
@@ -399,7 +447,12 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| e.context.as_ref().map(|c| c.contains("targets")).unwrap_or(false)));
+        assert!(errors.iter().any(|e| {
+            e.context
+                .as_ref()
+                .map(|c| c.contains("targets"))
+                .unwrap_or(false)
+        }));
     }
 
     #[test]
