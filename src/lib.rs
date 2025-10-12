@@ -4,5 +4,7 @@
 //! into tool-specific MCP (Model Context Protocol) server configurations.
 
 pub mod config;
+pub mod error;
 
-pub use config::{MultiAgentConfig, ServerConfig, Settings, ToolName};
+pub use config::{parse_config_file, MultiAgentConfig, ServerConfig, Settings, ToolName};
+pub use error::ConfigError;
