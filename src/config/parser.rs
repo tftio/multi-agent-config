@@ -376,4 +376,3 @@ command = "{A}"
         assert!(result.is_err());
     }
 }
-

@@ -6,4 +6,4 @@
 
 pub mod expander;
 
-pub use expander::{ExpansionResult, Expander};
+pub use expander::{Expander, ExpansionResult};

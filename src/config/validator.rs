@@ -1,8 +1,6 @@
 //! Configuration schema validation
 
-use crate::config::types::{
-    HttpServerConfig, MultiAgentConfig, ServerConfig, StdioServerConfig,
-};
+use crate::config::types::{HttpServerConfig, MultiAgentConfig, ServerConfig, StdioServerConfig};
 use regex::Regex;
 use std::collections::HashSet;
 

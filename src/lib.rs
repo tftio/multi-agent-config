@@ -8,11 +8,11 @@ pub mod error;
 pub mod expand;
 
 pub use config::{
-    parse_and_expand_config, parse_config_file, validate_config, MultiAgentConfig, ServerConfig,
-    Settings, ToolName, ValidationError,
+    MultiAgentConfig, ServerConfig, Settings, ToolName, ValidationError, parse_and_expand_config,
+    parse_config_file, validate_config,
 };
 pub use error::{
     ConfigError, EXIT_FILE_ERROR, EXIT_LOCK_ERROR, EXIT_PARTIAL_FAILURE, EXIT_SUCCESS,
     EXIT_VALIDATION_ERROR, MultiAgentError,
 };
-pub use expand::{ExpansionResult, Expander};
+pub use expand::{Expander, ExpansionResult};

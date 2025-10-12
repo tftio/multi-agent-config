@@ -202,7 +202,8 @@ impl Expander {
                     let after_shell = self.expand_shell_vars(&var_value);
 
                     // Then recursively expand config variables
-                    let expanded = self.expand_env_vars_recursive(&after_shell, depth + 1, visited)?;
+                    let expanded =
+                        self.expand_env_vars_recursive(&after_shell, depth + 1, visited)?;
 
                     // Unmark after expansion
                     visited.remove(var_name);
