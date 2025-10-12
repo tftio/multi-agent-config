@@ -118,6 +118,7 @@ impl StateTracker {
     /// # Returns
     ///
     /// Hash if found, None otherwise
+    #[must_use]
     pub fn get_file_hash(&self, path: &Path) -> Option<String> {
         self.state
             .generated_files
@@ -147,12 +148,13 @@ impl StateTracker {
 
         // Write using atomic write
         crate::file_ops::writer::write_file_atomic(&self.state_file_path, &json, Some(0o600))
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
 
         Ok(())
     }
 }
 
+#[allow(clippy::format_collect)]
 /// Compute SHA-256 hash of a file
 ///
 /// # Arguments
@@ -181,7 +183,7 @@ pub fn hash_file(path: &Path) -> Result<String, std::io::Error> {
     }
 
     let hash = hasher.finalize();
-    Ok(format!("sha256:{:x}", hash))
+    Ok(format!("sha256:{hash:x}"))
 }
 
 #[cfg(test)]
@@ -305,7 +307,7 @@ mod tests {
         assert_eq!(tracker.state.generated_files.len(), 1);
 
         // Add same path again with new hash
-        tracker.add_generated_file("cursor", path.clone(), "sha256:new".to_string());
+        tracker.add_generated_file("cursor", path, "sha256:new".to_string());
         assert_eq!(tracker.state.generated_files.len(), 1);
         assert_eq!(tracker.state.generated_files[0].hash, "sha256:new");
     }

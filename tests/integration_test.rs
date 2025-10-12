@@ -127,8 +127,8 @@ fn test_init_command() {
 /// Test validate command
 #[test]
 fn test_validate_command() {
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     let temp_dir = TempDir::new().unwrap();
     let config_path = temp_dir.path().join("config.toml");

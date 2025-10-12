@@ -52,6 +52,7 @@ struct CursorServer {
 /// # Errors
 ///
 /// Returns error if JSON serialization fails
+#[allow(clippy::implicit_hasher)]
 pub fn transform_for_cursor(
     servers: &HashMap<String, ServerConfig>,
     default_targets: &[String],
@@ -75,7 +76,8 @@ pub fn transform_for_cursor(
     };
 
     // Serialize to JSON with 2-space indentation
-    serde_json::to_string_pretty(&cursor_config).map_err(|e| format!("JSON serialization error: {e}"))
+    serde_json::to_string_pretty(&cursor_config)
+        .map_err(|e| format!("JSON serialization error: {e}"))
 }
 
 /// Transform a STDIO server to Cursor format
@@ -93,11 +95,7 @@ fn transform_stdio_server(stdio: &StdioServerConfig) -> CursorServer {
 mod tests {
     use super::*;
 
-    fn create_stdio_server(
-        command: &str,
-        args: Vec<String>,
-        targets: Vec<String>,
-    ) -> ServerConfig {
+    fn create_stdio_server(command: &str, args: Vec<String>, targets: Vec<String>) -> ServerConfig {
         ServerConfig::Stdio(StdioServerConfig {
             command: command.to_string(),
             args,

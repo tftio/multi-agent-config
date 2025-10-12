@@ -4,7 +4,7 @@
 
 use crate::config::types::{ServerConfig, ToolName};
 use crate::transform::filter::filter_servers_for_tool;
-use crate::transform::opencode::{OpencodeLocalServer, OpencodeRemoteServer, OpencodeServer};
+use crate::transform::opencode::OpencodeServer;
 use serde::Serialize;
 use std::collections::HashMap;
 
@@ -32,6 +32,7 @@ struct ClaudeCodeConfig {
 /// # Errors
 ///
 /// Returns error if JSON serialization fails
+#[allow(clippy::implicit_hasher)]
 pub fn transform_for_claude_code(
     servers: &HashMap<String, ServerConfig>,
     default_targets: &[String],
@@ -67,11 +68,7 @@ mod tests {
     use super::*;
     use crate::config::types::{HttpServerConfig, StdioServerConfig};
 
-    fn create_stdio_server(
-        command: &str,
-        args: Vec<String>,
-        targets: Vec<String>,
-    ) -> ServerConfig {
+    fn create_stdio_server(command: &str, args: Vec<String>, targets: Vec<String>) -> ServerConfig {
         ServerConfig::Stdio(StdioServerConfig {
             command: command.to_string(),
             args,
@@ -90,7 +87,11 @@ mod tests {
         let mut servers = HashMap::new();
         servers.insert(
             "test".to_string(),
-            create_stdio_server("npx", vec!["-y".to_string()], vec!["claude-code".to_string()]),
+            create_stdio_server(
+                "npx",
+                vec!["-y".to_string()],
+                vec!["claude-code".to_string()],
+            ),
         );
 
         let result = transform_for_claude_code(&servers, &[]);

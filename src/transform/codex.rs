@@ -73,6 +73,7 @@ struct CodexHttpServer {
 /// # Errors
 ///
 /// Returns error if TOML serialization fails
+#[allow(clippy::implicit_hasher)]
 pub fn transform_for_codex(
     servers: &HashMap<String, ServerConfig>,
     default_targets: &[String],
@@ -95,8 +96,7 @@ pub fn transform_for_codex(
     };
 
     // Serialize to TOML
-    toml::to_string_pretty(&codex_config)
-        .map_err(|e| format!("TOML serialization error: {e}"))
+    toml::to_string_pretty(&codex_config).map_err(|e| format!("TOML serialization error: {e}"))
 }
 
 /// Transform a STDIO server to Codex format
@@ -126,11 +126,7 @@ fn transform_http_server(http: &HttpServerConfig) -> CodexHttpServer {
 mod tests {
     use super::*;
 
-    fn create_stdio_server(
-        command: &str,
-        args: Vec<String>,
-        targets: Vec<String>,
-    ) -> ServerConfig {
+    fn create_stdio_server(command: &str, args: Vec<String>, targets: Vec<String>) -> ServerConfig {
         ServerConfig::Stdio(StdioServerConfig {
             command: command.to_string(),
             args,
@@ -144,7 +140,11 @@ mod tests {
         })
     }
 
-    fn create_http_server(url: &str, bearer_token: Option<String>, targets: Vec<String>) -> ServerConfig {
+    fn create_http_server(
+        url: &str,
+        bearer_token: Option<String>,
+        targets: Vec<String>,
+    ) -> ServerConfig {
         ServerConfig::Http(HttpServerConfig {
             url: url.to_string(),
             bearer_token,
@@ -169,7 +169,7 @@ mod tests {
         assert!(result.is_ok());
 
         let toml_str = result.unwrap();
-        println!("Generated TOML:\n{}", toml_str);
+        println!("Generated TOML:\n{toml_str}");
         assert!(toml_str.contains("[mcp_servers.test]"));
         assert!(toml_str.contains("command = \"npx\""));
         // TOML arrays might have different whitespace

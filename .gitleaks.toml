@@ -1,0 +1,23 @@
+# Gitleaks configuration for multi-agent-config
+# https://github.com/gitleaks/gitleaks
+
+title = "gitleaks config for multi-agent-config"
+
+[allowlist]
+description = "Allowlist for documentation examples and test fixtures"
+
+# Allow example API keys in architecture documentation
+paths = [
+    '''architecture/.*\.md''',
+    '''MULTI_AGENT_TOOL_REQUIREMENTS\.md''',
+    '''examples/.*''',
+    '''docs/.*''',
+]
+
+# Allow specific example secrets that appear in documentation
+regexes = [
+    '''msk-expandedkey456''',
+    '''example-api-key''',
+    '''placeholder-token''',
+    '''test-secret''',
+]

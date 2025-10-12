@@ -34,9 +34,10 @@ pub fn validate_command(config_path: &Path, verbose: bool) -> Result<(), MultiAg
             eprintln!("  {}. {}", i + 1, error);
         }
         return Err(MultiAgentError::Config(
-            multi_agent_config::error::ConfigError::ValidationError(
-                format!("{} validation error(s) found", errors.len()),
-            ),
+            multi_agent_config::error::ConfigError::ValidationError(format!(
+                "{} validation error(s) found",
+                errors.len()
+            )),
         ));
     }
 
@@ -45,11 +46,16 @@ pub fn validate_command(config_path: &Path, verbose: bool) -> Result<(), MultiAg
 
     if verbose {
         println!("Configuration valid!");
-        println!("  Total servers: {}", total_servers);
-        println!("  Settings version: {}",
-            config.settings.as_ref().map(|s| s.version.as_str()).unwrap_or("none"));
+        println!("  Total servers: {total_servers}");
+        println!(
+            "  Settings version: {}",
+            config
+                .settings
+                .as_ref()
+                .map_or("none", |s| s.version.as_str())
+        );
     } else {
-        println!("Configuration is valid ({} server(s))", total_servers);
+        println!("Configuration is valid ({total_servers} server(s))");
     }
 
     Ok(())
@@ -58,7 +64,7 @@ pub fn validate_command(config_path: &Path, verbose: bool) -> Result<(), MultiAg
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
+
     use std::io::Write;
     use tempfile::NamedTempFile;
 

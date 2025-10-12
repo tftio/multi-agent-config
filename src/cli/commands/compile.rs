@@ -1,8 +1,8 @@
 //! Compile command implementation
 
-use multi_agent_config::config::{parse_and_expand_config, validate_config, ToolName};
+use multi_agent_config::config::{ToolName, parse_and_expand_config, validate_config};
 use multi_agent_config::error::MultiAgentError;
-use multi_agent_config::file_ops::{create_backup, hash_file, write_file_atomic, StateTracker};
+use multi_agent_config::file_ops::{StateTracker, create_backup, hash_file, write_file_atomic};
 use multi_agent_config::transform::{
     transform_for_claude_code, transform_for_codex, transform_for_cursor, transform_for_opencode,
 };
@@ -13,8 +13,13 @@ fn get_tool_config_path(tool: ToolName) -> PathBuf {
     let config_dir = dirs::config_dir().unwrap_or_else(|| PathBuf::from("."));
 
     match tool {
-        ToolName::Cursor => config_dir.join("Cursor").join("User").join("globalStorage")
-            .join("saoudrizwan.claude-dev").join("settings").join("mcp.json"),
+        ToolName::Cursor => config_dir
+            .join("Cursor")
+            .join("User")
+            .join("globalStorage")
+            .join("saoudrizwan.claude-dev")
+            .join("settings")
+            .join("mcp.json"),
         ToolName::Opencode => config_dir.join("opencode").join("mcp.json"),
         ToolName::Codex => config_dir.join("codex").join("mcp_config.toml"),
         ToolName::ClaudeCode => config_dir.join("claude").join("mcp.json"),
@@ -41,7 +46,7 @@ fn get_tool_config_path(tool: ToolName) -> PathBuf {
 /// Returns error if config invalid, transformation fails, or write fails
 pub fn compile_command(
     config_path: &Path,
-    tools: Vec<String>,
+    tools: &[String],
     dry_run: bool,
     verbose: bool,
 ) -> Result<(), MultiAgentError> {
@@ -52,12 +57,13 @@ pub fn compile_command(
     if let Err(errors) = validate_config(&config) {
         eprintln!("Validation failed:");
         for error in &errors {
-            eprintln!("  - {}", error);
+            eprintln!("  - {error}");
         }
         return Err(MultiAgentError::Config(
-            multi_agent_config::error::ConfigError::ValidationError(
-                format!("{} error(s)", errors.len()),
-            ),
+            multi_agent_config::error::ConfigError::ValidationError(format!(
+                "{} error(s)",
+                errors.len()
+            )),
         ));
     }
 
@@ -65,10 +71,7 @@ pub fn compile_command(
     let target_tools: Vec<ToolName> = if tools.is_empty() {
         ToolName::concrete_tools()
     } else {
-        tools
-            .iter()
-            .filter_map(|t| ToolName::from_str(t))
-            .collect()
+        tools.iter().filter_map(|t| ToolName::from_str(t)).collect()
     };
 
     // Get default targets from settings
@@ -84,30 +87,29 @@ pub fn compile_command(
         .join("multi-agent-config")
         .join("state")
         .join("generated.json");
-    let mut state_tracker = StateTracker::load(&state_path)
-        .map_err(|e| MultiAgentError::FileOpError(
-            multi_agent_config::file_ops::writer::FileOpError::IoError(e)
-        ))?;
+    let mut state_tracker = StateTracker::load(&state_path).map_err(|e| {
+        MultiAgentError::FileOpError(multi_agent_config::file_ops::writer::FileOpError::Io(e))
+    })?;
 
     // Compile for each tool
     let mut compiled_count = 0;
 
     for tool in target_tools {
         if verbose {
-            println!("Compiling for {}...", tool);
+            println!("Compiling for {tool}...");
         }
 
         // Transform configuration
         let output_content = match tool {
             ToolName::Cursor => transform_for_cursor(&config.mcp.servers, &default_targets)
-                .map_err(|e| MultiAgentError::TransformError(e))?,
+                .map_err(MultiAgentError::TransformError)?,
             ToolName::Opencode => transform_for_opencode(&config.mcp.servers, &default_targets)
-                .map_err(|e| MultiAgentError::TransformError(e))?,
+                .map_err(MultiAgentError::TransformError)?,
             ToolName::Codex => transform_for_codex(&config.mcp.servers, &default_targets)
-                .map_err(|e| MultiAgentError::TransformError(e))?,
+                .map_err(MultiAgentError::TransformError)?,
             ToolName::ClaudeCode => {
                 transform_for_claude_code(&config.mcp.servers, &default_targets)
-                    .map_err(|e| MultiAgentError::TransformError(e))?
+                    .map_err(MultiAgentError::TransformError)?
             }
             ToolName::All => continue,
         };
@@ -136,9 +138,9 @@ pub fn compile_command(
 
             // Compute hash and update state
             let hash = hash_file(&output_path).map_err(|e| {
-                MultiAgentError::FileOpError(
-                    multi_agent_config::file_ops::writer::FileOpError::IoError(e),
-                )
+                MultiAgentError::FileOpError(multi_agent_config::file_ops::writer::FileOpError::Io(
+                    e,
+                ))
             })?;
             state_tracker.add_generated_file(&tool.to_string(), output_path.clone(), hash);
 
@@ -150,16 +152,14 @@ pub fn compile_command(
     // Save state
     if !dry_run {
         state_tracker.save().map_err(|e| {
-            MultiAgentError::FileOpError(
-                multi_agent_config::file_ops::writer::FileOpError::IoError(e),
-            )
+            MultiAgentError::FileOpError(multi_agent_config::file_ops::writer::FileOpError::Io(e))
         })?;
     }
 
     if dry_run {
         println!("Dry run complete (no files written)");
     } else {
-        println!("Successfully compiled {} configuration(s)", compiled_count);
+        println!("Successfully compiled {compiled_count} configuration(s)");
     }
 
     Ok(())

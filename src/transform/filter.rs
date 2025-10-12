@@ -15,7 +15,9 @@ use std::collections::HashMap;
 ///
 /// # Returns
 ///
-/// HashMap of servers that should be included for the specified tool
+/// `HashMap` of servers that should be included for the specified tool
+#[must_use]
+#[allow(clippy::implicit_hasher)]
 pub fn filter_servers_for_tool(
     servers: &HashMap<String, ServerConfig>,
     tool_name: ToolName,
@@ -42,7 +44,7 @@ pub fn filter_servers_for_tool(
 }
 
 /// Check if a server is enabled
-fn is_server_enabled(server: &ServerConfig) -> bool {
+const fn is_server_enabled(server: &ServerConfig) -> bool {
     match server {
         ServerConfig::Stdio(stdio) => stdio.enabled,
         ServerConfig::Http(http) => http.enabled,
@@ -85,11 +87,9 @@ fn should_include_server(targets: &[String], tool_name: ToolName) -> bool {
     }
 
     // Check if the specific tool name is in targets
-    targets.iter().any(|t| {
-        ToolName::from_str(t)
-            .map(|parsed| parsed == tool_name)
-            .unwrap_or(false)
-    })
+    targets
+        .iter()
+        .any(|t| ToolName::from_str(t).is_some_and(|parsed| parsed == tool_name))
 }
 
 #[cfg(test)]
@@ -123,7 +123,10 @@ mod tests {
     #[test]
     fn test_filter_servers_with_all_target() {
         let mut servers = HashMap::new();
-        servers.insert("test".to_string(), create_stdio_server(vec!["all".to_string()], true));
+        servers.insert(
+            "test".to_string(),
+            create_stdio_server(vec!["all".to_string()], true),
+        );
 
         let filtered = filter_servers_for_tool(&servers, ToolName::Cursor, &[]);
         assert_eq!(filtered.len(), 1);

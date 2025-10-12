@@ -32,13 +32,10 @@ pub fn parse_config_file(path: &Path) -> Result<MultiAgentConfig, ConfigError> {
     // Parse TOML
     let config: MultiAgentConfig = toml::from_str(&contents).map_err(|e| {
         // Extract line number from toml error if available
-        let line = e
-            .span()
-            .map(|span| {
-                // Count newlines up to the error position
-                contents[..span.start].lines().count()
-            })
-            .unwrap_or(0);
+        let line = e.span().map_or(0, |span| {
+            // Count newlines up to the error position
+            contents[..span.start].lines().count()
+        });
 
         ConfigError::parse_error(e.message(), line)
     })?;
@@ -103,7 +100,7 @@ pub fn parse_and_expand_config(path: &Path) -> Result<MultiAgentConfig, MultiAge
     let mut expander = Expander::new(env_section, shell_env);
 
     // Expand variables in all server configurations
-    for (_name, server) in &mut config.mcp.servers {
+    for server in config.mcp.servers.values_mut() {
         match server {
             ServerConfig::Stdio(stdio) => {
                 // Expand command
@@ -135,7 +132,7 @@ pub fn parse_and_expand_config(path: &Path) -> Result<MultiAgentConfig, MultiAge
 
     // Log warnings if any
     for warning in expander.warnings() {
-        eprintln!("Warning: {}", warning);
+        eprintln!("Warning: {warning}");
     }
 
     Ok(config)
@@ -253,7 +250,7 @@ version = "1.0"  # Missing closing bracket
                 assert!(!message.is_empty());
                 assert!(line > 0);
             }
-            Err(e) => panic!("Expected ParseError, got: {}", e),
+            Err(e) => panic!("Expected ParseError, got: {e}"),
             Ok(_) => panic!("Expected error, got success"),
         }
     }

@@ -5,7 +5,7 @@ use regex::Regex;
 use std::collections::HashSet;
 
 /// Validation error with context
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ValidationError {
     /// Error message
     pub message: String,
@@ -53,6 +53,10 @@ impl std::fmt::Display for ValidationError {
 ///
 /// * `Ok(())` - Configuration is valid
 /// * `Err(Vec<ValidationError>)` - List of validation errors found
+///
+/// # Errors
+///
+/// Returns `Err` with list of validation errors if configuration is invalid
 pub fn validate_config(config: &MultiAgentConfig) -> Result<(), Vec<ValidationError>> {
     let mut errors = Vec::new();
 
@@ -113,7 +117,7 @@ fn validate_settings(settings: &crate::config::types::Settings, errors: &mut Vec
         if !seen.insert(target) {
             // Duplicate found - this is a warning in the spec but we'll include it
             errors.push(ValidationError::with_context(
-                format!("Duplicate target '{}'", target),
+                format!("Duplicate target '{target}'"),
                 "settings.default_targets",
             ));
         }
@@ -150,7 +154,7 @@ fn validate_stdio_server(
     server: &StdioServerConfig,
     errors: &mut Vec<ValidationError>,
 ) {
-    let ctx = format!("mcp.servers.{}", name);
+    let ctx = format!("mcp.servers.{name}");
 
     // Command must not be empty
     if server.command.trim().is_empty() {
@@ -175,7 +179,7 @@ fn validate_stdio_server(
 
 /// Validate HTTP server configuration
 fn validate_http_server(name: &str, server: &HttpServerConfig, errors: &mut Vec<ValidationError>) {
-    let ctx = format!("mcp.servers.{}", name);
+    let ctx = format!("mcp.servers.{name}");
 
     // URL must start with http:// or https://
     if !server.url.starts_with("http://") && !server.url.starts_with("https://") {
@@ -194,7 +198,7 @@ fn validate_http_server(name: &str, server: &HttpServerConfig, errors: &mut Vec<
 
 /// Validate targets array
 fn validate_targets(server_name: &str, targets: &[String], errors: &mut Vec<ValidationError>) {
-    let ctx = format!("mcp.servers.{}.targets", server_name);
+    let ctx = format!("mcp.servers.{server_name}.targets");
     let valid_tools = ["claude-code", "cursor", "opencode", "codex", "all"];
 
     for target in targets {
@@ -349,7 +353,7 @@ mod tests {
         servers.insert(
             "test".to_string(),
             ServerConfig::Stdio(StdioServerConfig {
-                command: "".to_string(),
+                command: String::new(),
                 args: vec![],
                 enabled: true,
                 targets: vec!["all".to_string()],
@@ -445,21 +449,20 @@ mod tests {
         assert!(result.is_err());
 
         let errors = result.unwrap_err();
-        assert!(errors.iter().any(|e| {
-            e.context
-                .as_ref()
-                .map(|c| c.contains("targets"))
-                .unwrap_or(false)
-        }));
+        assert!(
+            errors
+                .iter()
+                .any(|e| { e.context.as_ref().is_some_and(|c| c.contains("targets")) })
+        );
     }
 
     #[test]
     fn test_validation_error_display() {
         let err = ValidationError::new("test message");
-        assert_eq!(format!("{}", err), "test message");
+        assert_eq!(format!("{err}"), "test message");
 
         let err = ValidationError::with_context("test message", "context");
-        assert_eq!(format!("{}", err), "context: test message");
+        assert_eq!(format!("{err}"), "context: test message");
     }
 
     #[test]

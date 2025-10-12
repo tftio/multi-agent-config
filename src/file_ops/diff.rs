@@ -3,6 +3,8 @@
 use std::fs;
 use std::path::Path;
 
+#[allow(clippy::format_collect)]
+#[allow(clippy::missing_panics_doc)]
 /// Generate a unified diff between two strings
 ///
 /// Creates a unified diff format showing the differences between old and new content.
@@ -16,15 +18,18 @@ use std::path::Path;
 /// # Returns
 ///
 /// String containing unified diff format
+#[must_use]
 pub fn generate_diff(old_content: &str, new_content: &str, file_path: &Path) -> String {
     use similar::{ChangeTag, TextDiff};
+
+    use std::fmt::Write;
 
     let diff = TextDiff::from_lines(old_content, new_content);
     let mut output = String::new();
 
     // Add diff header
-    output.push_str(&format!("--- {}\n", file_path.display()));
-    output.push_str(&format!("+++ {} (new)\n", file_path.display()));
+    let _ = writeln!(output, "--- {}", file_path.display());
+    let _ = writeln!(output, "+++ {} (new)", file_path.display());
 
     // Generate unified diff
     for (idx, group) in diff.grouped_ops(3).iter().enumerate() {
@@ -40,7 +45,7 @@ pub fn generate_diff(old_content: &str, new_content: &str, file_path: &Path) -> 
                     ChangeTag::Equal => " ",
                 };
 
-                output.push_str(&format!("{}{}", sign, change.value()));
+                let _ = write!(output, "{}{}", sign, change.value());
             }
         }
     }
@@ -58,6 +63,7 @@ pub fn generate_diff(old_content: &str, new_content: &str, file_path: &Path) -> 
 /// # Returns
 ///
 /// Unified diff string
+#[must_use]
 pub fn generate_file_diff(file_path: &Path, new_content: &str) -> String {
     let old_content = if file_path.exists() {
         fs::read_to_string(file_path).unwrap_or_default()

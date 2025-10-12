@@ -7,22 +7,23 @@ use tempfile::NamedTempFile;
 
 /// Error type for file operations
 #[derive(Debug, thiserror::Error)]
+#[allow(clippy::enum_variant_names)]
 pub enum FileOpError {
     /// I/O error during file operation
     #[error("I/O error: {0}")]
-    IoError(#[from] std::io::Error),
+    Io(#[from] std::io::Error),
 
     /// Failed to create parent directory
     #[error("Failed to create parent directory: {0}")]
-    CreateDirError(String),
+    CreateDir(String),
 
     /// Failed to set file permissions
     #[error("Failed to set permissions: {0}")]
-    PermissionError(String),
+    Permission(String),
 
     /// Failed to persist temporary file
     #[error("Failed to persist file: {0}")]
-    PersistError(String),
+    Persist(String),
 }
 
 /// Write content to a file atomically
@@ -53,9 +54,8 @@ pub fn write_file_atomic(
     // Create parent directories if needed
     if let Some(parent) = path.parent() {
         if !parent.exists() {
-            fs::create_dir_all(parent).map_err(|e| {
-                FileOpError::CreateDirError(format!("{}: {}", parent.display(), e))
-            })?;
+            fs::create_dir_all(parent)
+                .map_err(|e| FileOpError::CreateDir(format!("{}: {}", parent.display(), e)))?;
         }
     }
 
@@ -78,7 +78,7 @@ pub fn write_file_atomic(
         temp_file
             .as_file()
             .set_permissions(perms)
-            .map_err(|e| FileOpError::PermissionError(e.to_string()))?;
+            .map_err(|e| FileOpError::Permission(e.to_string()))?;
     }
 
     // On Windows, permissions parameter is ignored (Windows has different permission model)
@@ -90,7 +90,7 @@ pub fn write_file_atomic(
     // Atomically persist the temporary file to the target path
     temp_file
         .persist(path)
-        .map_err(|e| FileOpError::PersistError(format!("{}: {}", path.display(), e.error)))?;
+        .map_err(|e| FileOpError::Persist(format!("{}: {}", path.display(), e.error)))?;
 
     Ok(())
 }
@@ -118,7 +118,11 @@ mod tests {
     #[test]
     fn test_write_file_atomic_creates_parent_dirs() {
         let temp_dir = TempDir::new().unwrap();
-        let file_path = temp_dir.path().join("subdir").join("nested").join("test.txt");
+        let file_path = temp_dir
+            .path()
+            .join("subdir")
+            .join("nested")
+            .join("test.txt");
 
         let result = write_file_atomic(&file_path, "nested content", None);
         assert!(result.is_ok());

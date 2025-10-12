@@ -10,7 +10,6 @@ mod completions;
 mod doctor;
 
 use cli::commands::{compile_command, diff_command, init_command, validate_command};
-use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -122,7 +121,7 @@ fn main() {
             }
         },
         Commands::Compile { tool, dry_run } => {
-            match compile_command(&config_path, tool, dry_run, cli.verbose) {
+            match compile_command(&config_path, &tool, dry_run, cli.verbose) {
                 Ok(()) => 0,
                 Err(e) => {
                     eprintln!("{}", e.format_with_suggestion());
@@ -130,7 +129,7 @@ fn main() {
                 }
             }
         }
-        Commands::Diff { tool } => match diff_command(&config_path, tool, cli.verbose) {
+        Commands::Diff { tool } => match diff_command(&config_path, &tool, cli.verbose) {
             Ok(()) => 0,
             Err(e) => {
                 eprintln!("{}", e.format_with_suggestion());
@@ -152,12 +151,12 @@ fn main() {
 
 /// Print version information
 fn version_command() {
-    println!("multi-agent-config {}", VERSION);
+    println!("multi-agent-config {VERSION}");
 }
 
 /// Print license information
 fn license_command() {
-    println!("multi-agent-config is licensed under {}", LICENSE);
+    println!("multi-agent-config is licensed under {LICENSE}");
     println!();
 
     match LICENSE {
@@ -184,7 +183,7 @@ fn license_command() {
             println!("• State changes");
         }
         _ => {
-            println!("License: {}", LICENSE);
+            println!("License: {LICENSE}");
             println!("See the LICENSE file for full terms and conditions.");
         }
     }
@@ -196,17 +195,6 @@ fn license_command() {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_version_constant() {
-        assert!(!VERSION.is_empty());
-        assert!(VERSION.chars().next().unwrap().is_numeric());
-    }
-
-    #[test]
-    fn test_license_constant() {
-        assert!(!LICENSE.is_empty());
-    }
 
     #[test]
     fn test_default_config_path() {

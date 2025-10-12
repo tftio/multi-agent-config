@@ -1,5 +1,7 @@
 //! Variable expansion implementation
 
+#![allow(clippy::items_after_statements)]
+
 use std::collections::{HashMap, HashSet};
 
 /// Maximum depth for variable expansion to prevent infinite loops
@@ -30,21 +32,19 @@ pub enum ExpansionError {
 impl std::fmt::Display for ExpansionError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExpansionError::CircularReference { var_name, depth } => {
+            Self::CircularReference { var_name, depth } => {
                 write!(
                     f,
-                    "Circular reference detected for variable '{}' at depth {}",
-                    var_name, depth
+                    "Circular reference detected for variable '{var_name}' at depth {depth}"
                 )
             }
-            ExpansionError::MaxDepthExceeded {
+            Self::MaxDepthExceeded {
                 current_depth,
                 max_depth,
             } => {
                 write!(
                     f,
-                    "Maximum expansion depth exceeded: {} > {}",
-                    current_depth, max_depth
+                    "Maximum expansion depth exceeded: {current_depth} > {max_depth}"
                 )
             }
         }
@@ -70,7 +70,11 @@ impl Expander {
     ///
     /// * `env_section` - Variables from config [env] section
     /// * `shell_env` - Shell environment variables
-    pub fn new(env_section: HashMap<String, String>, shell_env: HashMap<String, String>) -> Self {
+    #[must_use]
+    pub const fn new(
+        env_section: HashMap<String, String>,
+        shell_env: HashMap<String, String>,
+    ) -> Self {
         Self {
             env_section,
             shell_env,
@@ -79,6 +83,7 @@ impl Expander {
     }
 
     /// Get collected warnings
+    #[must_use]
     pub fn warnings(&self) -> &[String] {
         &self.warnings
     }
@@ -100,6 +105,10 @@ impl Expander {
     /// # Returns
     ///
     /// Expanded string with all ${VAR} references resolved
+    ///
+    /// # Panics
+    ///
+    /// May panic if regex compilation fails (should never happen with hardcoded pattern)
     pub fn expand_shell_vars(&mut self, value: &str) -> String {
         use regex::Regex;
 
@@ -107,6 +116,7 @@ impl Expander {
         let mut result = value.to_string();
 
         // Process all matches
+        #[allow(clippy::never_loop)]
         loop {
             let mut found_match = false;
             let result_clone = result.clone();
@@ -120,7 +130,7 @@ impl Expander {
                 } else {
                     // Undefined variable - replace with empty string and warn
                     self.warnings
-                        .push(format!("Shell variable '{}' is undefined", var_name));
+                        .push(format!("Shell variable '{var_name}' is undefined"));
                     result = result.replace(full_match, "");
                 }
                 found_match = true;
@@ -178,6 +188,7 @@ impl Expander {
         let mut result = value.to_string();
 
         // Process all matches
+        #[allow(clippy::never_loop)]
         loop {
             let mut found_match = false;
             let result_clone = result.clone();
@@ -212,7 +223,7 @@ impl Expander {
                 } else {
                     // Undefined variable - replace with empty string and warn
                     self.warnings
-                        .push(format!("Config variable '{}' is undefined", var_name));
+                        .push(format!("Config variable '{var_name}' is undefined"));
                     result = result.replace(full_match, "");
                 }
                 found_match = true;
@@ -272,7 +283,7 @@ mod tests {
         };
         assert!(format!("{err}").contains("Circular reference"));
         assert!(format!("{err}").contains("FOO"));
-        assert!(format!("{err}").contains("5"));
+        assert!(format!("{err}").contains('5'));
     }
 
     #[test]

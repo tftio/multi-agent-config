@@ -36,11 +36,11 @@ pub fn run_doctor() -> i32 {
     // Summary
     if has_warnings {
         println!("⚠️  Warnings found");
-        0 // Warnings don't cause failure
     } else {
         println!("✨ Everything looks healthy!");
-        0
     }
+
+    0 // Always return success (warnings don't fail)
 }
 
 fn check_for_updates() -> Result<Option<String>, String> {
@@ -63,7 +63,7 @@ fn check_for_updates() -> Result<Option<String>, String> {
         .collect::<Vec<_>>()
         .join("/");
 
-    let url = format!("https://api.github.com/repos/{}/releases/latest", repo_path);
+    let url = format!("https://api.github.com/repos/{repo_path}/releases/latest");
     let response: serde_json::Value = client
         .get(&url)
         .send()
@@ -80,9 +80,9 @@ fn check_for_updates() -> Result<Option<String>, String> {
         .trim_start_matches('v');
     let current = env!("CARGO_PKG_VERSION");
 
-    if latest != current {
-        Ok(Some(latest.to_string()))
-    } else {
+    if latest == current {
         Ok(None)
+    } else {
+        Ok(Some(latest.to_string()))
     }
 }

@@ -3,6 +3,7 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+#[allow(clippy::format_collect)]
 /// Create a backup of an existing file
 ///
 /// Creates a backup with `.backup` extension. If the original file doesn't exist,
@@ -36,7 +37,7 @@ pub fn create_backup(original_path: &Path) -> Result<Option<PathBuf>, std::io::E
                 .and_then(|s| s.to_str())
                 .unwrap_or("")
         )
-        .trim_start_matches('.')
+        .trim_start_matches('.'),
     );
 
     // Copy file to backup

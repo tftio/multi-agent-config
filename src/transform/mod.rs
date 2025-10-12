@@ -12,4 +12,6 @@ pub use claude_code::transform_for_claude_code;
 pub use codex::transform_for_codex;
 pub use cursor::transform_for_cursor;
 pub use filter::filter_servers_for_tool;
-pub use opencode::{transform_for_opencode, OpencodeLocalServer, OpencodeRemoteServer, OpencodeServer};
+pub use opencode::{
+    OpencodeLocalServer, OpencodeRemoteServer, OpencodeServer, transform_for_opencode,
+};

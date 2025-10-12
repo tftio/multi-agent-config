@@ -75,6 +75,7 @@ pub struct OpencodeRemoteServer {
 /// # Errors
 ///
 /// Returns error if JSON serialization fails
+#[allow(clippy::implicit_hasher)]
 pub fn transform_for_opencode(
     servers: &HashMap<String, ServerConfig>,
     default_targets: &[String],
@@ -86,12 +87,8 @@ pub fn transform_for_opencode(
 
     for (name, server) in filtered {
         let opencode_server = match server {
-            ServerConfig::Stdio(stdio) => {
-                OpencodeServer::Local(transform_stdio_server(&stdio))
-            }
-            ServerConfig::Http(http) => {
-                OpencodeServer::Remote(transform_http_server(&http))
-            }
+            ServerConfig::Stdio(stdio) => OpencodeServer::Local(transform_stdio_server(&stdio)),
+            ServerConfig::Http(http) => OpencodeServer::Remote(transform_http_server(&http)),
         };
         opencode_servers.insert(name, opencode_server);
     }
@@ -106,6 +103,7 @@ pub fn transform_for_opencode(
 }
 
 /// Transform a STDIO server to opencode.ai local format
+#[must_use]
 pub fn transform_stdio_server(stdio: &StdioServerConfig) -> OpencodeLocalServer {
     // Combine command and args into single array
     let mut command = vec![stdio.command.clone()];
@@ -120,6 +118,7 @@ pub fn transform_stdio_server(stdio: &StdioServerConfig) -> OpencodeLocalServer 
 }
 
 /// Transform an HTTP server to opencode.ai remote format
+#[must_use]
 pub fn transform_http_server(http: &HttpServerConfig) -> OpencodeRemoteServer {
     // Convert bearer_token to Authorization header if present
     let headers = http.bearer_token.as_ref().map(|token| {
@@ -140,11 +139,7 @@ pub fn transform_http_server(http: &HttpServerConfig) -> OpencodeRemoteServer {
 mod tests {
     use super::*;
 
-    fn create_stdio_server(
-        command: &str,
-        args: Vec<String>,
-        targets: Vec<String>,
-    ) -> ServerConfig {
+    fn create_stdio_server(command: &str, args: Vec<String>, targets: Vec<String>) -> ServerConfig {
         ServerConfig::Stdio(StdioServerConfig {
             command: command.to_string(),
             args,
@@ -158,7 +153,11 @@ mod tests {
         })
     }
 
-    fn create_http_server(url: &str, bearer_token: Option<String>, targets: Vec<String>) -> ServerConfig {
+    fn create_http_server(
+        url: &str,
+        bearer_token: Option<String>,
+        targets: Vec<String>,
+    ) -> ServerConfig {
         ServerConfig::Http(HttpServerConfig {
             url: url.to_string(),
             bearer_token,
@@ -172,7 +171,11 @@ mod tests {
         let mut servers = HashMap::new();
         servers.insert(
             "test".to_string(),
-            create_stdio_server("npx", vec!["-y".to_string(), "package".to_string()], vec!["opencode".to_string()]),
+            create_stdio_server(
+                "npx",
+                vec!["-y".to_string(), "package".to_string()],
+                vec!["opencode".to_string()],
+            ),
         );
 
         let result = transform_for_opencode(&servers, &[]);
@@ -193,7 +196,11 @@ mod tests {
         let mut servers = HashMap::new();
         servers.insert(
             "remote".to_string(),
-            create_http_server("https://example.com/mcp", Some("token123".to_string()), vec!["all".to_string()]),
+            create_http_server(
+                "https://example.com/mcp",
+                Some("token123".to_string()),
+                vec!["all".to_string()],
+            ),
         );
 
         let result = transform_for_opencode(&servers, &[]);
@@ -241,7 +248,11 @@ mod tests {
         let mut servers = HashMap::new();
         servers.insert(
             "test".to_string(),
-            create_stdio_server("node", vec!["server.js".to_string()], vec!["all".to_string()]),
+            create_stdio_server(
+                "node",
+                vec!["server.js".to_string()],
+                vec!["all".to_string()],
+            ),
         );
 
         let result = transform_for_opencode(&servers, &[]);

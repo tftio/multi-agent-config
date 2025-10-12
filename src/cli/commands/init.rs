@@ -90,7 +90,7 @@ pub fn init_command(config_path: &Path, force: bool) -> Result<(), MultiAgentErr
             Ok(None) => {}
             Err(e) => {
                 return Err(MultiAgentError::FileOpError(
-                    multi_agent_config::file_ops::writer::FileOpError::IoError(e),
+                    multi_agent_config::file_ops::writer::FileOpError::Io(e),
                 ));
             }
         }
@@ -99,7 +99,10 @@ pub fn init_command(config_path: &Path, force: bool) -> Result<(), MultiAgentErr
     // Write template to config file
     write_file_atomic(config_path, TEMPLATE_CONFIG, Some(0o600))?;
 
-    println!("Success: Configuration initialized: {}", config_path.display());
+    println!(
+        "Success: Configuration initialized: {}",
+        config_path.display()
+    );
     println!();
     println!("Next steps:");
     println!("1. Edit the configuration file to add your MCP servers");
@@ -172,7 +175,11 @@ mod tests {
     #[test]
     fn test_init_command_creates_parent_dirs() {
         let temp_dir = TempDir::new().unwrap();
-        let config_path = temp_dir.path().join("nested").join("dir").join("config.toml");
+        let config_path = temp_dir
+            .path()
+            .join("nested")
+            .join("dir")
+            .join("config.toml");
 
         let result = init_command(&config_path, false);
         assert!(result.is_ok());

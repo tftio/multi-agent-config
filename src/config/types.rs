@@ -116,11 +116,11 @@ pub struct HttpServerConfig {
 }
 
 /// Default value for boolean fields: true
-fn default_true() -> bool {
+const fn default_true() -> bool {
     true
 }
 
-/// Default value for targets: ["all"]
+/// Default value for targets: `["all"]`
 fn default_all_targets() -> Vec<String> {
     vec!["all".to_string()]
 }
@@ -135,7 +135,7 @@ pub enum ToolName {
     Cursor,
     /// opencode.ai
     Opencode,
-    /// OpenAI Codex
+    /// `OpenAI` Codex
     Codex,
     /// All tools
     All,
@@ -143,35 +143,37 @@ pub enum ToolName {
 
 impl ToolName {
     /// Get all concrete tool names (excluding "all")
-    pub fn concrete_tools() -> Vec<ToolName> {
-        vec![
-            ToolName::ClaudeCode,
-            ToolName::Cursor,
-            ToolName::Opencode,
-            ToolName::Codex,
-        ]
+    #[must_use]
+    pub fn concrete_tools() -> Vec<Self> {
+        vec![Self::ClaudeCode, Self::Cursor, Self::Opencode, Self::Codex]
     }
 
     /// Parse from string
-    pub fn from_str(s: &str) -> Option<ToolName> {
+    ///
+    /// Note: This is different from `FromStr` trait which returns `Result`
+    #[must_use]
+    #[allow(clippy::should_implement_trait)]
+    pub fn from_str(s: &str) -> Option<Self> {
         match s {
-            "claude-code" => Some(ToolName::ClaudeCode),
-            "cursor" => Some(ToolName::Cursor),
-            "opencode" => Some(ToolName::Opencode),
-            "codex" => Some(ToolName::Codex),
-            "all" => Some(ToolName::All),
+            "claude-code" => Some(Self::ClaudeCode),
+            "cursor" => Some(Self::Cursor),
+            "opencode" => Some(Self::Opencode),
+            "codex" => Some(Self::Codex),
+            "all" => Some(Self::All),
             _ => None,
         }
     }
 
     /// Convert to string
-    pub fn as_str(&self) -> &'static str {
+    #[must_use]
+    #[allow(clippy::trivially_copy_pass_by_ref)]
+    pub const fn as_str(&self) -> &'static str {
         match self {
-            ToolName::ClaudeCode => "claude-code",
-            ToolName::Cursor => "cursor",
-            ToolName::Opencode => "opencode",
-            ToolName::Codex => "codex",
-            ToolName::All => "all",
+            Self::ClaudeCode => "claude-code",
+            Self::Cursor => "cursor",
+            Self::Opencode => "opencode",
+            Self::Codex => "codex",
+            Self::All => "all",
         }
     }
 }
@@ -186,7 +188,7 @@ impl std::str::FromStr for ToolName {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        ToolName::from_str(s).ok_or_else(|| format!("Invalid tool name: {}", s))
+        Self::from_str(s).ok_or_else(|| format!("Invalid tool name: {s}"))
     }
 }
 

@@ -3,11 +3,21 @@
 use std::path::PathBuf;
 use thiserror::Error;
 
-/// Exit codes matching specification
+// Exit codes matching specification
+
+/// Exit code for successful operation
 pub const EXIT_SUCCESS: i32 = 0;
+
+/// Exit code for validation errors
 pub const EXIT_VALIDATION_ERROR: i32 = 1;
+
+/// Exit code for file operation errors
 pub const EXIT_FILE_ERROR: i32 = 2;
+
+/// Exit code for partial failure (some operations succeeded)
 pub const EXIT_PARTIAL_FAILURE: i32 = 3;
+
+/// Exit code for lock errors
 pub const EXIT_LOCK_ERROR: i32 = 4;
 
 /// Main error type for multi-agent-config
@@ -40,55 +50,56 @@ pub enum MultiAgentError {
 
 impl MultiAgentError {
     /// Get the exit code for this error
-    pub fn exit_code(&self) -> i32 {
+    #[must_use]
+    #[allow(clippy::match_same_arms)]
+    pub const fn exit_code(&self) -> i32 {
         match self {
-            MultiAgentError::Config(config_err) => match config_err {
+            Self::Config(config_err) => match config_err {
                 ConfigError::FileNotFound(_) | ConfigError::PermissionDenied(_) => EXIT_FILE_ERROR,
                 ConfigError::ParseError { .. }
                 | ConfigError::ValidationError(_)
                 | ConfigError::TomlError(_) => EXIT_VALIDATION_ERROR,
                 ConfigError::IoError(_) => EXIT_FILE_ERROR,
             },
-            MultiAgentError::EnvError(_) => EXIT_VALIDATION_ERROR,
-            MultiAgentError::ExpansionError(_) => EXIT_VALIDATION_ERROR,
-            MultiAgentError::TransformError(_) => EXIT_VALIDATION_ERROR,
-            MultiAgentError::FileOpError(_) => EXIT_FILE_ERROR,
-            MultiAgentError::CliError(_) => EXIT_VALIDATION_ERROR,
+            Self::EnvError(_) => EXIT_VALIDATION_ERROR,
+            Self::ExpansionError(_) => EXIT_VALIDATION_ERROR,
+            Self::TransformError(_) => EXIT_VALIDATION_ERROR,
+            Self::FileOpError(_) => EXIT_FILE_ERROR,
+            Self::CliError(_) => EXIT_VALIDATION_ERROR,
         }
     }
 
     /// Format error with suggestion
+    #[must_use]
     pub fn format_with_suggestion(&self) -> String {
         match self {
-            MultiAgentError::Config(ConfigError::FileNotFound(path)) => {
+            Self::Config(ConfigError::FileNotFound(path)) => {
                 format!(
                     "Error: Configuration file not found: {}\n\n\
                      Suggestion: Run 'multi-agent-config init' to create a template configuration.",
                     path.display()
                 )
             }
-            MultiAgentError::Config(ConfigError::PermissionDenied(path)) => {
+            Self::Config(ConfigError::PermissionDenied(path)) => {
                 format!(
                     "Error: Permission denied: {}\n\n\
                      Suggestion: Check file permissions and ensure you have read access.",
                     path.display()
                 )
             }
-            MultiAgentError::Config(ConfigError::ParseError { message, line }) => {
+            Self::Config(ConfigError::ParseError { message, line }) => {
                 format!(
-                    "Error: Parse error at line {}: {}\n\n\
-                     Suggestion: Check TOML syntax at the indicated line.",
-                    line, message
+                    "Error: Parse error at line {line}: {message}\n\n\
+                     Suggestion: Check TOML syntax at the indicated line."
                 )
             }
-            MultiAgentError::Config(ConfigError::ValidationError(msg)) => {
+            Self::Config(ConfigError::ValidationError(msg)) => {
                 format!(
-                    "Error: Validation error: {}\n\n\
-                     Suggestion: Run 'multi-agent-config validate' to see all validation errors.",
-                    msg
+                    "Error: Validation error: {msg}\n\n\
+                     Suggestion: Run 'multi-agent-config validate' to see all validation errors."
                 )
             }
-            _ => format!("Error: {}", self),
+            _ => format!("Error: {self}"),
         }
     }
 }
@@ -129,7 +140,7 @@ pub enum ConfigError {
 impl ConfigError {
     /// Create a parse error with line number
     pub fn parse_error(message: impl Into<String>, line: usize) -> Self {
-        ConfigError::ParseError {
+        Self::ParseError {
             message: message.into(),
             line,
         }
@@ -137,7 +148,7 @@ impl ConfigError {
 
     /// Create a validation error
     pub fn validation(message: impl Into<String>) -> Self {
-        ConfigError::ValidationError(message.into())
+        Self::ValidationError(message.into())
     }
 }
 
@@ -203,7 +214,7 @@ mod tests {
     fn test_file_not_found_display() {
         let err = ConfigError::FileNotFound(PathBuf::from("/path/to/config.toml"));
         assert_eq!(
-            format!("{}", err),
+            format!("{err}"),
             "Configuration file not found: /path/to/config.toml"
         );
     }
@@ -211,22 +222,19 @@ mod tests {
     #[test]
     fn test_permission_denied_display() {
         let err = ConfigError::PermissionDenied(PathBuf::from("/etc/config.toml"));
-        assert_eq!(format!("{}", err), "Permission denied: /etc/config.toml");
+        assert_eq!(format!("{err}"), "Permission denied: /etc/config.toml");
     }
 
     #[test]
     fn test_parse_error_display() {
         let err = ConfigError::parse_error("invalid syntax", 42);
-        assert_eq!(format!("{}", err), "Parse error at line 42: invalid syntax");
+        assert_eq!(format!("{err}"), "Parse error at line 42: invalid syntax");
     }
 
     #[test]
     fn test_validation_error_display() {
         let err = ConfigError::validation("missing required field");
-        assert_eq!(
-            format!("{}", err),
-            "Validation error: missing required field"
-        );
+        assert_eq!(format!("{err}"), "Validation error: missing required field");
     }
 
     #[test]
@@ -256,7 +264,7 @@ mod tests {
     fn test_multi_agent_error_display() {
         let err = MultiAgentError::EnvError("test env error".to_string());
         assert_eq!(
-            format!("{}", err),
+            format!("{err}"),
             "Environment variable error: test env error"
         );
     }
