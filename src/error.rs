@@ -21,6 +21,10 @@ pub enum MultiAgentError {
     #[error("Environment variable error: {0}")]
     EnvError(String),
 
+    /// Variable expansion error
+    #[error("Expansion error: {0}")]
+    ExpansionError(#[from] crate::expand::expander::ExpansionError),
+
     /// Transformation error
     #[error("Transformation error: {0}")]
     TransformError(String),
@@ -46,6 +50,7 @@ impl MultiAgentError {
                 ConfigError::IoError(_) => EXIT_FILE_ERROR,
             },
             MultiAgentError::EnvError(_) => EXIT_VALIDATION_ERROR,
+            MultiAgentError::ExpansionError(_) => EXIT_VALIDATION_ERROR,
             MultiAgentError::TransformError(_) => EXIT_VALIDATION_ERROR,
             MultiAgentError::FileOpError(_) => EXIT_FILE_ERROR,
             MultiAgentError::CliError(_) => EXIT_VALIDATION_ERROR,
