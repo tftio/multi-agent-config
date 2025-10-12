@@ -9,7 +9,7 @@ mod cli;
 mod completions;
 mod doctor;
 
-use cli::commands::{compile_command, init_command, validate_command};
+use cli::commands::{compile_command, diff_command, init_command, validate_command};
 use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
@@ -133,8 +133,8 @@ fn main() {
         Commands::Diff { tool } => match diff_command(&config_path, tool, cli.verbose) {
             Ok(()) => 0,
             Err(e) => {
-                print_error(&e);
-                1
+                eprintln!("{}", e.format_with_suggestion());
+                e.exit_code()
             }
         },
         Commands::Completions { shell } => {
@@ -191,12 +191,6 @@ fn license_command() {
 
     println!();
     println!("For full license text, see LICENSE file in project root");
-}
-
-/// Diff command (stub for Phase 5)
-fn diff_command(_config_path: &PathBuf, _tools: Vec<String>, _verbose: bool) -> Result<(), String> {
-    print_info("Diff command not yet implemented (Phase 5)");
-    Ok(())
 }
 
 #[cfg(test)]
