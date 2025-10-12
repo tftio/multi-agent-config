@@ -162,17 +162,42 @@ args = ["-y", "package"]
     assert!(stdout.contains("valid"));
 }
 
-/// Test compile command (stub)
+/// Test compile command with dry-run
 #[test]
 fn test_compile_command() {
+    use tempfile::TempDir;
+
+    let temp_dir = TempDir::new().unwrap();
+    let config_path = temp_dir.path().join("config.toml");
+
+    // Create valid config
+    let valid_config = r#"
+[settings]
+version = "1.0"
+
+[mcp.servers.test]
+command = "npx"
+targets = ["cursor"]
+"#;
+    std::fs::write(&config_path, valid_config).unwrap();
+
     let output = Command::new("cargo")
-        .args(["run", "--bin", "multi-agent-config", "--", "compile"])
+        .args([
+            "run",
+            "--bin",
+            "multi-agent-config",
+            "--",
+            "--config",
+            config_path.to_str().unwrap(),
+            "compile",
+            "--dry-run",
+        ])
         .output()
         .expect("Failed to execute binary");
 
     assert!(output.status.success());
     let stdout = String::from_utf8_lossy(&output.stdout);
-    assert!(stdout.contains("not yet implemented") || stdout.contains("Phase 5"));
+    assert!(stdout.contains("Would write") || stdout.contains("Dry run"));
 }
 
 /// Test diff command (stub)

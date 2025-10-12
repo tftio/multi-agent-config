@@ -9,7 +9,7 @@ mod cli;
 mod completions;
 mod doctor;
 
-use cli::commands::{init_command, validate_command};
+use cli::commands::{compile_command, init_command, validate_command};
 use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
@@ -125,8 +125,8 @@ fn main() {
             match compile_command(&config_path, tool, dry_run, cli.verbose) {
                 Ok(()) => 0,
                 Err(e) => {
-                    print_error(&e);
-                    1
+                    eprintln!("{}", e.format_with_suggestion());
+                    e.exit_code()
                 }
             }
         }
@@ -191,17 +191,6 @@ fn license_command() {
 
     println!();
     println!("For full license text, see LICENSE file in project root");
-}
-
-/// Compile configuration (stub for Phase 5)
-fn compile_command(
-    _config_path: &PathBuf,
-    _tools: Vec<String>,
-    _dry_run: bool,
-    _verbose: bool,
-) -> Result<(), String> {
-    print_info("Compile command not yet implemented (Phase 5)");
-    Ok(())
 }
 
 /// Diff command (stub for Phase 5)
