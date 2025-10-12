@@ -6,5 +6,8 @@
 pub mod config;
 pub mod error;
 
-pub use config::{parse_config_file, MultiAgentConfig, ServerConfig, Settings, ToolName};
+pub use config::{
+    parse_config_file, validate_config, MultiAgentConfig, ServerConfig, Settings, ToolName,
+    ValidationError,
+};
 pub use error::ConfigError;
