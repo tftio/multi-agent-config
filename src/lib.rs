@@ -6,6 +6,7 @@
 pub mod config;
 pub mod error;
 pub mod expand;
+pub mod transform;
 
 pub use config::{
     MultiAgentConfig, ServerConfig, Settings, ToolName, ValidationError, parse_and_expand_config,
