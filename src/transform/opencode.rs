@@ -15,7 +15,7 @@ struct OpencodeConfig {
 /// opencode.ai server configuration (STDIO or HTTP)
 #[derive(Debug, Serialize)]
 #[serde(untagged)]
-enum OpencodeServer {
+pub enum OpencodeServer {
     /// Local STDIO server
     Local(OpencodeLocalServer),
     /// Remote HTTP server
@@ -24,7 +24,7 @@ enum OpencodeServer {
 
 /// opencode.ai local STDIO server
 #[derive(Debug, Serialize)]
-struct OpencodeLocalServer {
+pub struct OpencodeLocalServer {
     /// Server type (always "local")
     #[serde(rename = "type")]
     server_type: String,
@@ -42,7 +42,7 @@ struct OpencodeLocalServer {
 
 /// opencode.ai remote HTTP server
 #[derive(Debug, Serialize)]
-struct OpencodeRemoteServer {
+pub struct OpencodeRemoteServer {
     /// Server type (always "remote")
     #[serde(rename = "type")]
     server_type: String,
@@ -106,7 +106,7 @@ pub fn transform_for_opencode(
 }
 
 /// Transform a STDIO server to opencode.ai local format
-fn transform_stdio_server(stdio: &StdioServerConfig) -> OpencodeLocalServer {
+pub fn transform_stdio_server(stdio: &StdioServerConfig) -> OpencodeLocalServer {
     // Combine command and args into single array
     let mut command = vec![stdio.command.clone()];
     command.extend(stdio.args.clone());
@@ -120,7 +120,7 @@ fn transform_stdio_server(stdio: &StdioServerConfig) -> OpencodeLocalServer {
 }
 
 /// Transform an HTTP server to opencode.ai remote format
-fn transform_http_server(http: &HttpServerConfig) -> OpencodeRemoteServer {
+pub fn transform_http_server(http: &HttpServerConfig) -> OpencodeRemoteServer {
     // Convert bearer_token to Authorization header if present
     let headers = http.bearer_token.as_ref().map(|token| {
         let mut headers = HashMap::new();
