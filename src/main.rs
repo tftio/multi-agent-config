@@ -1,111 +1,139 @@
-//! Multi Agent Config
+//! Multi-Agent-Config - Unified Configuration Manager for AI Coding Tools
 //!
-//! A multi-agent configuration and orchestration tool
+//! Command-line interface for managing AI coding tool configurations.
+
 use clap::{Parser, Subcommand};
 use std::path::PathBuf;
-use anyhow::Result;
-use colored::*;
-use indicatif::{ProgressBar, ProgressStyle};
 
+mod cli;
 mod completions;
 mod doctor;
-mod update;
+
+use cli::output::{print_error, print_info};
 
 /// Application version from Cargo.toml
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// License identifier from Cargo.toml
-const LICENSE: &str = "MIT";
+const LICENSE: &str = env!("CARGO_PKG_LICENSE");
 
+/// CLI structure
 #[derive(Parser)]
 #[command(name = "multi-agent-config")]
-#[command(about = "A multi-agent configuration and orchestration tool")]
 #[command(version = VERSION)]
+#[command(about = "Unified configuration manager for AI coding tools")]
+#[command(long_about = None)]
 struct Cli {
+    /// Path to configuration file
+    #[arg(long, global = true)]
+    config: Option<PathBuf>,
+
+    /// Enable verbose logging
+    #[arg(short, long, global = true)]
+    verbose: bool,
+
     #[command(subcommand)]
     command: Commands,
 }
 
+/// CLI subcommands
 #[derive(Subcommand)]
 enum Commands {
+    /// Initialize configuration with template
+    Init {
+        /// Overwrite existing configuration
+        #[arg(short, long)]
+        force: bool,
+    },
+
+    /// Validate configuration without writing
+    Validate,
+
+    /// Compile and write tool configurations
+    Compile {
+        /// Target specific tools (default: all with matching servers)
+        #[arg(short, long)]
+        tool: Vec<String>,
+
+        /// Show what would be done without writing
+        #[arg(short = 'n', long)]
+        dry_run: bool,
+    },
+
+    /// Show diff of what would change
+    Diff {
+        /// Target specific tools (default: all with matching servers)
+        #[arg(short, long)]
+        tool: Vec<String>,
+    },
+
     /// Show version information
     Version,
+
     /// Show license information
     License,
-    /// Process input data
-    Process {
-        /// Input file or value
-        input: String,
-        /// Enable verbose output
-        #[arg(short, long)]
-        verbose: bool,
-    },
+
     /// Generate shell completion scripts
     Completions {
         /// Shell to generate completions for
         shell: clap_complete::Shell,
     },
-    /// Check health and configuration
+
+    /// Run health check and diagnostics
     Doctor,
-    /// Update to the latest version
-    Update {
-        /// Specific version to install
-        #[arg(long)]
-        version: Option<String>,
-        /// Force update even if already up-to-date
-        #[arg(short, long)]
-        force: bool,
-        /// Custom installation directory
-        #[arg(long)]
-        install_dir: Option<PathBuf>,
-    },
 }
 
-fn main() -> Result<()> {
+/// Get default config path
+fn default_config_path() -> PathBuf {
+    dirs::config_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("multi-agent-config")
+        .join("config.toml")
+}
+
+fn main() {
     let cli = Cli::parse();
 
-    match cli.command {
+    // Get config path, using default if not provided
+    let config_path = cli.config.unwrap_or_else(default_config_path);
+
+    let result = match cli.command {
         Commands::Version => {
-            print_version();
+            version_command();
+            Ok(())
         }
         Commands::License => {
-            print_license();
+            license_command();
+            Ok(())
         }
-        Commands::Process { input, verbose } => {
-            process_input(&input, verbose)?;
-        }
+        Commands::Init { force } => init_command(&config_path, force),
+        Commands::Validate => validate_command(&config_path, cli.verbose),
+        Commands::Compile { tool, dry_run } => compile_command(&config_path, tool, dry_run, cli.verbose),
+        Commands::Diff { tool } => diff_command(&config_path, tool, cli.verbose),
         Commands::Completions { shell } => {
             completions::generate_completions(shell);
+            Ok(())
         }
         Commands::Doctor => {
-            let exit_code = doctor::run_doctor();
-            std::process::exit(exit_code);
+            doctor::run_doctor();
+            Ok(())
         }
-        Commands::Update {
-            version,
-            force,
-            install_dir,
-        } => {
-            let exit_code = update::run_update(
-                version.as_deref(),
-                force,
-                install_dir.as_deref(),
-            );
-            std::process::exit(exit_code);
-        }
-    }
+    };
 
-Ok(())
+    if let Err(e) = result {
+        print_error(&e);
+        std::process::exit(1);
+    }
 }
 
 /// Print version information
-fn print_version() {
-    println!("{} {}", "multi-agent-config".green().bold(), VERSION);
+fn version_command() {
+    println!("multi-agent-config {}", VERSION);
 }
 
 /// Print license information
-fn print_license() {
-    println!("{} is licensed under {}", "Multi Agent Config".green().bold(), LICENSE.yellow());
+fn license_command() {
+    println!("multi-agent-config is licensed under {}", LICENSE);
     println!();
 
     match LICENSE {
@@ -118,7 +146,7 @@ fn print_license() {
             println!();
             println!("Requires:");
             println!("• License and copyright notice");
-        },
+        }
         "Apache-2.0" => {
             println!("Apache License 2.0 - A permissive license that allows:");
             println!("• Commercial use");
@@ -130,13 +158,7 @@ fn print_license() {
             println!("Requires:");
             println!("• License and copyright notice");
             println!("• State changes");
-        },
-        "CC0-1.0" => {
-            println!("Creative Commons CC0 1.0 Universal - Public domain dedication:");
-            println!("• No rights reserved");
-            println!("• Can be used for any purpose");
-            println!("• No attribution required");
-        },
+        }
         _ => {
             println!("License: {}", LICENSE);
             println!("See the LICENSE file for full terms and conditions.");
@@ -144,35 +166,39 @@ fn print_license() {
     }
 
     println!();
-    println!("For full license text, see: {}", "LICENSE file in project root".blue().underline());
+    println!("For full license text, see LICENSE file in project root");
 }
 
-/// Process the input value
-fn process_input(input: &str, verbose: bool) -> Result<()> {
-    let pb = ProgressBar::new(100);
-    pb.set_style(
-        ProgressStyle::default_bar()
-            .template("{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos:>7}/{len:7} {msg}")
-            .unwrap()
-            .progress_chars("#>-"),
-    );
+/// Initialize configuration (stub for Phase 5)
+fn init_command(_config_path: &PathBuf, _force: bool) -> Result<(), String> {
+    print_info("Init command not yet implemented (Phase 5)");
+    Ok(())
+}
 
-    pb.set_message("Processing input");
+/// Validate configuration (stub for Phase 5)
+fn validate_command(_config_path: &PathBuf, _verbose: bool) -> Result<(), String> {
+    print_info("Validate command not yet implemented (Phase 5)");
+    Ok(())
+}
 
-    if verbose {
-        println!("{} {}", "Processing input:".blue(), input);
-    }
+/// Compile configuration (stub for Phase 5)
+fn compile_command(
+    _config_path: &PathBuf,
+    _tools: Vec<String>,
+    _dry_run: bool,
+    _verbose: bool,
+) -> Result<(), String> {
+    print_info("Compile command not yet implemented (Phase 5)");
+    Ok(())
+}
 
-    // TODO: Add your application logic here
-    // Simulate some work
-    for i in 0..100 {
-        std::thread::sleep(std::time::Duration::from_millis(10));
-        pb.set_position(i + 1);
-    }
-
-    pb.finish_with_message("Processing complete");
-    println!("{} {}", "Successfully processed:".green(), input);
-
+/// Diff command (stub for Phase 5)
+fn diff_command(
+    _config_path: &PathBuf,
+    _tools: Vec<String>,
+    _verbose: bool,
+) -> Result<(), String> {
+    print_info("Diff command not yet implemented (Phase 5)");
     Ok(())
 }
 
@@ -189,18 +215,12 @@ mod tests {
     #[test]
     fn test_license_constant() {
         assert!(!LICENSE.is_empty());
-        assert!(matches!(LICENSE, "MIT" | "Apache-2.0" | "CC0-1.0" | _));
     }
 
     #[test]
-    fn test_process_input() {
-        let result = process_input("test", false);
-        assert!(result.is_ok());
-    }
-
-    #[test]
-    fn test_process_input_verbose() {
-        let result = process_input("test", true);
-        assert!(result.is_ok());
+    fn test_default_config_path() {
+        let path = default_config_path();
+        assert!(path.to_string_lossy().contains("multi-agent-config"));
+        assert!(path.to_string_lossy().ends_with("config.toml"));
     }
 }
