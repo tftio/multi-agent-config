@@ -87,6 +87,53 @@ impl Expander {
     pub fn clear_warnings(&mut self) {
         self.warnings.clear();
     }
+
+    /// Expand shell environment variables (${VAR} syntax)
+    ///
+    /// Replaces all `${VAR}` patterns with values from shell environment.
+    /// Undefined variables are replaced with empty string and generate a warning.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - String containing variable references
+    ///
+    /// # Returns
+    ///
+    /// Expanded string with all ${VAR} references resolved
+    pub fn expand_shell_vars(&mut self, value: &str) -> String {
+        use regex::Regex;
+
+        let re = Regex::new(r"\$\{([^}]+)\}").unwrap();
+        let mut result = value.to_string();
+
+        // Process all matches
+        loop {
+            let mut found_match = false;
+            let result_clone = result.clone();
+
+            for cap in re.captures_iter(&result_clone) {
+                let full_match = cap.get(0).unwrap().as_str();
+                let var_name = cap.get(1).unwrap().as_str();
+
+                if let Some(var_value) = self.shell_env.get(var_name) {
+                    result = result.replace(full_match, var_value);
+                } else {
+                    // Undefined variable - replace with empty string and warn
+                    self.warnings
+                        .push(format!("Shell variable '{}' is undefined", var_name));
+                    result = result.replace(full_match, "");
+                }
+                found_match = true;
+                break; // Restart from beginning after each replacement
+            }
+
+            if !found_match {
+                break;
+            }
+        }
+
+        result
+    }
 }
 
 #[cfg(test)]
@@ -126,5 +173,82 @@ mod tests {
     #[test]
     fn test_max_expansion_depth_constant() {
         assert_eq!(MAX_EXPANSION_DEPTH, 10);
+    }
+
+    #[test]
+    fn test_expand_shell_vars_single() {
+        let mut shell_env = HashMap::new();
+        shell_env.insert("HOME".to_string(), "/home/user".to_string());
+
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        let result = expander.expand_shell_vars("${HOME}/config");
+        assert_eq!(result, "/home/user/config");
+        assert!(expander.warnings().is_empty());
+    }
+
+    #[test]
+    fn test_expand_shell_vars_multiple() {
+        let mut shell_env = HashMap::new();
+        shell_env.insert("USER".to_string(), "alice".to_string());
+        shell_env.insert("HOST".to_string(), "server".to_string());
+
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        let result = expander.expand_shell_vars("${USER}@${HOST}");
+        assert_eq!(result, "alice@server");
+        assert!(expander.warnings().is_empty());
+    }
+
+    #[test]
+    fn test_expand_shell_vars_undefined() {
+        let shell_env = HashMap::new();
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        let result = expander.expand_shell_vars("${UNDEFINED}");
+        assert_eq!(result, "");
+        assert_eq!(expander.warnings().len(), 1);
+        assert!(expander.warnings()[0].contains("UNDEFINED"));
+        assert!(expander.warnings()[0].contains("undefined"));
+    }
+
+    #[test]
+    fn test_expand_shell_vars_mixed_defined_undefined() {
+        let mut shell_env = HashMap::new();
+        shell_env.insert("DEFINED".to_string(), "value".to_string());
+
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        let result = expander.expand_shell_vars("${DEFINED}-${UNDEFINED}");
+        assert_eq!(result, "value-");
+        assert_eq!(expander.warnings().len(), 1);
+    }
+
+    #[test]
+    fn test_expand_shell_vars_no_substitution() {
+        let shell_env = HashMap::new();
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        let result = expander.expand_shell_vars("plain text");
+        assert_eq!(result, "plain text");
+        assert!(expander.warnings().is_empty());
+    }
+
+    #[test]
+    fn test_expand_shell_vars_nested_braces() {
+        let mut shell_env = HashMap::new();
+        shell_env.insert("VAR".to_string(), "value".to_string());
+
+        let env_section = HashMap::new();
+        let mut expander = Expander::new(env_section, shell_env);
+
+        // {VAR} should not be expanded by shell expander
+        let result = expander.expand_shell_vars("{VAR} and ${VAR}");
+        assert_eq!(result, "{VAR} and value");
     }
 }
