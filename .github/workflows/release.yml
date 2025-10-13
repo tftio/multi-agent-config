@@ -95,7 +95,7 @@ jobs:
           echo "✅ Version consistency verified for ${{ matrix.target }}"
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@1.86.0
+        uses: dtolnay/rust-toolchain@1.100.0
         with:
           targets: ${{ matrix.target }}
 
