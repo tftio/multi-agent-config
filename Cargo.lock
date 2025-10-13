@@ -1093,7 +1093,7 @@ dependencies = [
 
 [[package]]
 name = "multi-agent-config"
-version = "0.1.15"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "chrono",
@@ -2444,9 +2444,9 @@ checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 
 [[package]]
 name = "workhelix-cli-common"
-version = "0.1.3"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1ba4687f28413809517b4d3e3a5c9e5ef6821c7657dcd5db13c486214d60af8"
+checksum = "120bd4bf1d60008c57e472c0f9bef32eefa4696a58f42c0b9bd0663cb0558ea9"
 dependencies = [
  "clap",
  "clap_complete",
