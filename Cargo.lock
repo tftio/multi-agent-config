@@ -310,6 +310,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "colored"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fde0e0ec90c9dfb3b4b1a0891a7dcd0e2bffde2f7efed5fe7c9bb00e5bfb915e"
+dependencies = [
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "console"
 version = "0.15.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1099,7 +1108,7 @@ dependencies = [
  "chrono",
  "clap",
  "clap_complete",
- "colored",
+ "colored 3.0.0",
  "dirs",
  "indicatif",
  "is-terminal",
@@ -2450,7 +2459,7 @@ checksum = "fc428297afeda8ac151760175e658d890814d1418c6ccd9057c0607dd06777a9"
 dependencies = [
  "clap",
  "clap_complete",
- "colored",
+ "colored 2.2.0",
  "flate2",
  "hex",
  "is-terminal",
