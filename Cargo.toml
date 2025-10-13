@@ -1,6 +1,6 @@
 [package]
 name = "multi-agent-config"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 rust-version = "1.85.0"
 authors = ["James Felix Black <jfb@workhelix.com>"]
