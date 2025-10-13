@@ -193,7 +193,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Download Linux binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: multi-agent-config-x86_64-unknown-linux-gnu
           path: ./bin
