@@ -1,6 +1,6 @@
 [package]
 name = "multi-agent-config"
-version = "0.2.4"
+version = "0.2.6"
 edition = "2021"
 rust-version = "1.85.0"
 authors = ["James Felix Black <jfb@workhelix.com>"]
@@ -33,19 +33,20 @@ clap = { version = "4.5", features = ["derive"] }
 clap_complete = "4.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8"
+toml = "0.9"
 chrono = { version = "0.4", features = ["serde"] }
 anyhow = "1.0"
-thiserror = "1.0"
-regex = "1.11"
-which = "7.0"
-similar = "2.6"
-colored = "2.1"
-indicatif = "0.17"
+thiserror = "2.0"
+regex = "1.12"
+which = "8.0"
+similar = "2.7"
+colored = "3.0"
+indicatif = "0.18"
 is-terminal = "0.4"
-dirs = "5.0"
+dirs = "6.0"
 sha2 = "0.10"
-tempfile = "3.0"
-workhelix-cli-common = "0.1.10"
+tempfile = "3.23"
+workhelix-cli-common = "0.2.0"
+cargo-edit = "0.13.7"
 
 [dev-dependencies]
